@@ -147,10 +147,12 @@ All Ajax devices appear as appropriate Home Assistant entities:
 
 ### Update Interval
 
-The integration uses **real-time streaming** for instant updates (< 1 second), with a backup polling every 30 seconds. The polling serves as a fallback in case the streaming connection is interrupted. You can adjust the polling interval in `const.py` if needed:
+The integration uses **real-time streaming** for instant updates (< 1 second), with a minimal backup polling every 60 seconds. The polling serves only as a safety fallback in case the streaming connection fails.
+
+**⚠️ Important**: Do not reduce the polling interval below 60 seconds to avoid overloading Ajax's API servers. The streaming already handles all real-time updates.
 
 ```python
-UPDATE_INTERVAL = 30  # seconds
+UPDATE_INTERVAL = 60  # seconds
 ```
 
 ### Logging
@@ -378,10 +380,12 @@ Tous les appareils Ajax apparaissent comme entités Home Assistant appropriées 
 
 ### Intervalle de Mise à Jour
 
-L'intégration utilise le **streaming temps réel** pour des mises à jour instantanées (< 1 seconde), avec un polling de secours toutes les 30 secondes. Le polling sert de solution de repli en cas d'interruption de la connexion streaming. Vous pouvez ajuster l'intervalle de polling dans `const.py` si nécessaire :
+L'intégration utilise le **streaming temps réel** pour des mises à jour instantanées (< 1 seconde), avec un polling de secours minimal toutes les 60 secondes. Le polling sert uniquement de solution de repli au cas où la connexion streaming serait interrompue.
+
+**⚠️ Important** : Ne réduisez pas l'intervalle de polling en dessous de 60 secondes pour éviter de surcharger les serveurs API d'Ajax. Le streaming gère déjà toutes les mises à jour en temps réel.
 
 ```python
-UPDATE_INTERVAL = 30  # secondes
+UPDATE_INTERVAL = 60  # secondes
 ```
 
 ### Journalisation
