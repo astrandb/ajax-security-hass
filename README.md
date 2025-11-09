@@ -95,6 +95,37 @@ Issues, pull requests, and feedback are welcome!
 
 The integration will automatically discover all your Ajax devices and create entities for them.
 
+## 🔒 Security & Privacy
+
+**Your credentials are handled with the utmost care:**
+
+### Credential Storage
+- **Local storage only**: Your email and password are stored in Home Assistant's encrypted config entry system (`.storage/core.config_entries`)
+- **Never leaves your network**: Credentials are only transmitted directly to Ajax's official API servers
+- **No third parties**: The integration does not communicate with any third-party servers
+
+### Authentication Process
+1. **Password hashing**: Your password is hashed using SHA-256 before being sent to Ajax servers
+2. **Secure communication**: All API communication uses gRPC over HTTPS (encrypted TLS/SSL)
+3. **Session tokens**: After authentication, session tokens are stored locally in Home Assistant's secure storage
+4. **No logging**: Credentials are never logged or exposed in debug logs
+
+### What the Developer Cannot Access
+- ❌ I (the developer) **cannot access your credentials**
+- ❌ No analytics, telemetry, or tracking
+- ❌ No data collection of any kind
+- ✅ Fully open source - you can audit the code yourself
+
+### Security Recommendations
+- Use a strong, unique password for your Ajax account
+- Enable two-factor authentication on your Ajax account if available
+- Ensure your Home Assistant instance is properly secured (HTTPS, strong passwords, firewall)
+- Keep Home Assistant and this integration up to date
+
+For complete transparency, you can review how credentials are handled in the source code:
+- Configuration flow: [`config_flow.py`](https://github.com/foXaCe/ajax-hass/blob/main/custom_components/ajax/config_flow.py)
+- API authentication: [`api.py`](https://github.com/foXaCe/ajax-hass/blob/main/custom_components/ajax/api.py)
+
 ## 📖 Usage
 
 ### Security Control
@@ -327,6 +358,37 @@ Les issues, pull requests et retours d'expérience sont les bienvenus !
 5. Cliquez sur **Soumettre**
 
 L'intégration découvrira automatiquement tous vos appareils Ajax et créera des entités pour eux.
+
+## 🔒 Sécurité & Confidentialité
+
+**Vos identifiants sont traités avec le plus grand soin :**
+
+### Stockage des Identifiants
+- **Stockage local uniquement** : Votre email et mot de passe sont stockés dans le système de config entry chiffré de Home Assistant (`.storage/core.config_entries`)
+- **Ne quitte jamais votre réseau** : Les identifiants sont uniquement transmis directement aux serveurs API officiels Ajax
+- **Aucun tiers** : L'intégration ne communique avec aucun serveur tiers
+
+### Processus d'Authentification
+1. **Hachage du mot de passe** : Votre mot de passe est haché en SHA-256 avant d'être envoyé aux serveurs Ajax
+2. **Communication sécurisée** : Toute communication API utilise gRPC sur HTTPS (TLS/SSL chiffré)
+3. **Tokens de session** : Après authentification, les tokens de session sont stockés localement dans le stockage sécurisé de Home Assistant
+4. **Pas de journalisation** : Les identifiants ne sont jamais journalisés ou exposés dans les logs de débogage
+
+### Ce que le Développeur ne peut PAS Accéder
+- ❌ Je (le développeur) **ne peux pas accéder à vos identifiants**
+- ❌ Aucune analyse, télémétrie ou tracking
+- ❌ Aucune collecte de données d'aucune sorte
+- ✅ Entièrement open source - vous pouvez auditer le code vous-même
+
+### Recommandations de Sécurité
+- Utilisez un mot de passe fort et unique pour votre compte Ajax
+- Activez l'authentification à deux facteurs sur votre compte Ajax si disponible
+- Assurez-vous que votre instance Home Assistant est correctement sécurisée (HTTPS, mots de passe forts, pare-feu)
+- Maintenez Home Assistant et cette intégration à jour
+
+Pour une transparence totale, vous pouvez examiner comment les identifiants sont gérés dans le code source :
+- Flux de configuration : [`config_flow.py`](https://github.com/foXaCe/ajax-hass/blob/main/custom_components/ajax/config_flow.py)
+- Authentification API : [`api.py`](https://github.com/foXaCe/ajax-hass/blob/main/custom_components/ajax/api.py)
 
 ## 📖 Utilisation
 
