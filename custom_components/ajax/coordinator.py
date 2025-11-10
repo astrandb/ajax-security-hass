@@ -64,6 +64,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         self.account: AjaxAccount | None = None
         self._streaming_tasks: dict[str, asyncio.Task] = {}  # space_id -> space updates streaming task
         self._notification_streaming_tasks: dict[str, asyncio.Task] = {}  # space_id -> notification streaming task
+        self._groups_loaded_events: dict[str, asyncio.Event] = {}  # space_id -> event triggered when groups are loaded
 
         super().__init__(
             hass,
@@ -93,8 +94,18 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             for space_id in self.account.spaces.keys():
                 await self._async_update_notifications(space_id, limit=50)
 
+            # Create events for waiting on groups to be loaded from stream
+            for space_id in self.account.spaces.keys():
+                if space_id not in self._groups_loaded_events:
+                    self._groups_loaded_events[space_id] = asyncio.Event()
+
             # Start real-time streaming tasks for each space (if not already started)
             await self._async_start_streaming_tasks()
+
+            # Wait for groups to be loaded from stream (with timeout)
+            # This ensures group/zone entities are created during first setup
+            if self.account:
+                await self._async_wait_for_groups()
 
             return self.account
 
@@ -102,6 +113,38 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             raise ConfigEntryAuthFailed(f"Authentication failed: {err}") from err
         except AjaxApiError as err:
             raise UpdateFailed(f"Error communicating with API: {err}") from err
+
+    async def _async_wait_for_groups(self) -> None:
+        """Wait for groups to be loaded from stream during initial setup.
+
+        This method waits for the first stream update containing group/security data
+        to ensure that group entities are created during the initial setup.
+        Uses a timeout to avoid blocking if the space has no groups.
+        """
+        timeout = 10  # seconds
+        wait_tasks = []
+
+        for space_id, event in self._groups_loaded_events.items():
+            if not event.is_set():
+                wait_tasks.append((space_id, event.wait()))
+
+        if not wait_tasks:
+            return
+
+        _LOGGER.debug("Waiting for groups to be loaded from stream (timeout: %ds)...", timeout)
+
+        try:
+            # Wait for all events with timeout
+            await asyncio.wait_for(
+                asyncio.gather(*[task for _, task in wait_tasks], return_exceptions=True),
+                timeout=timeout
+            )
+            _LOGGER.info("Groups loaded from stream successfully")
+        except asyncio.TimeoutError:
+            # Timeout is expected if space has no groups or stream is slow
+            _LOGGER.debug("Timeout waiting for groups (this is normal if space has no groups)")
+        except Exception as err:
+            _LOGGER.warning("Error waiting for groups: %s", err)
 
     async def _async_start_streaming_tasks(self) -> None:
         """Start real-time streaming tasks for all spaces."""
@@ -626,6 +669,11 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                                     self._fire_security_state_event(space, old_state, new_state)
                                     if not batch_mode:
                                         self.async_set_updated_data(self.account)
+
+                        # Signal that groups/security data has been loaded from stream
+                        # This unblocks the initial setup waiting for group entities
+                        if space_id in self._groups_loaded_events:
+                            self._groups_loaded_events[space_id].set()
 
                     except Exception as mode_err:
                         _LOGGER.error("Error parsing security mode: %s", mode_err)
