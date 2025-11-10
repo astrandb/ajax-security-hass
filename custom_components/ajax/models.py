@@ -85,6 +85,33 @@ class AjaxRoom:
         return f"Room({self.name}, devices={len(self.device_ids)})"
 
 
+class GroupState(Enum):
+    """Security states for Ajax groups."""
+
+    NONE = "none"
+    ARMED = "armed"
+    DISARMED = "disarmed"
+
+
+@dataclass
+class AjaxGroup:
+    """Represents a security group in an Ajax space."""
+
+    id: str
+    name: str
+    space_id: str
+    state: GroupState = GroupState.NONE
+    night_mode_enabled: bool = False
+    bulk_arm_involved: bool = False
+    bulk_disarm_involved: bool = False
+    image_id: str | None = None
+    image_url: str | None = None
+    device_ids: list[str] = field(default_factory=list)
+
+    def __str__(self) -> str:
+        return f"Group({self.name}, state={self.state.value}, devices={len(self.device_ids)})"
+
+
 @dataclass
 class AjaxDevice:
     """Represents a device in an Ajax space."""
@@ -211,11 +238,16 @@ class AjaxSpace:
     can_arm: bool = True
     can_disarm: bool = True
 
+    # Group mode (if system uses groups instead of simple armed/disarmed)
+    group_mode_enabled: bool = False
+    night_mode_enabled: bool = False
+
     # Notifications
     unread_notifications: int = 0
 
     # Collections
     rooms: dict[str, AjaxRoom] = field(default_factory=dict)
+    groups: dict[str, AjaxGroup] = field(default_factory=dict)
     devices: dict[str, AjaxDevice] = field(default_factory=dict)
     notifications: list[AjaxNotification] = field(default_factory=list)
 

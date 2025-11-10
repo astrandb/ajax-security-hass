@@ -214,25 +214,6 @@ logger:
 2. Check that devices are visible in the Ajax app
 3. Try reloading the integration
 
-## 🔧 Technical Details
-
-### How This Integration Was Built
-
-This integration was developed through reverse engineering of the official Ajax mobile app API:
-
-1. **SSL Pinning Bypass**: Used Frida to bypass certificate pinning in the Ajax Android app
-2. **Traffic Capture**: Captured gRPC traffic using mitmproxy to understand the API structure
-3. **Protocol Analysis**: Extracted and analyzed Protocol Buffer (.proto) definitions from the APK
-4. **Code Generation**: Generated Python gRPC client code from the extracted protobuf schemas
-5. **Implementation**: Built a complete Home Assistant integration using the reverse-engineered API
-
-**Key Technologies**:
-- **gRPC/Protobuf**: Ajax uses Google's gRPC protocol for all API communication
-- **Streaming API**: Real-time updates via server-sent streaming (same as the official app)
-- **Authentication**: Session-based authentication with device registration
-
-The integration communicates **directly** with Ajax's official cloud servers (`mobile-gw.prod.ajax.systems:443`) using the same API as the mobile app.
-
 ### Privacy & Security
 
 - ✅ Your credentials are only used to authenticate with Ajax servers
@@ -477,25 +458,6 @@ logger:
 1. Attendez que la synchronisation initiale soit terminée (jusqu'à 30 secondes)
 2. Vérifiez que les appareils sont visibles dans l'app Ajax
 3. Essayez de recharger l'intégration
-
-## 🔧 Détails Techniques
-
-### Comment Cette Intégration a été Développée
-
-Cette intégration a été développée par rétro-ingénierie de l'API de l'application mobile Ajax officielle :
-
-1. **Contournement SSL Pinning** : Utilisation de Frida pour contourner l'épinglage de certificat dans l'app Android Ajax
-2. **Capture du Trafic** : Capture du trafic gRPC avec mitmproxy pour comprendre la structure de l'API
-3. **Analyse de Protocole** : Extraction et analyse des définitions Protocol Buffer (.proto) depuis l'APK
-4. **Génération de Code** : Génération du code client gRPC Python à partir des schémas protobuf extraits
-5. **Implémentation** : Construction d'une intégration Home Assistant complète utilisant l'API rétro-ingénierie
-
-**Technologies Clés** :
-- **gRPC/Protobuf** : Ajax utilise le protocole gRPC de Google pour toute communication API
-- **API Streaming** : Mises à jour temps réel via streaming serveur (identique à l'app officielle)
-- **Authentification** : Authentification par session avec enregistrement d'appareil
-
-L'intégration communique **directement** avec les serveurs cloud officiels Ajax (`mobile-gw.prod.ajax.systems:443`) en utilisant la même API que l'application mobile.
 
 ### Confidentialité & Sécurité
 

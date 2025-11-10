@@ -225,14 +225,75 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         except Exception as err:
             _LOGGER.error("Error processing notification event for space %s: %s", space_id, err)
 
+    async def _async_parse_groups_from_snapshot(self, space_id: str, space_protobuf) -> None:
+        """Parse groups from Space snapshot and update the data model.
+
+        Args:
+            space_id: The space ID
+            space_protobuf: The Space protobuf message
+        """
+        try:
+            # Use the API client's parsing method
+            groups_data = self.api_client._parse_groups_from_space(space_protobuf)
+
+            # Get the space from our account
+            if not self.account or space_id not in self.account.spaces:
+                _LOGGER.warning("Space %s not found in account", space_id)
+                return
+
+            space = self.account.spaces[space_id]
+
+            # Update space with group mode settings
+            space.group_mode_enabled = groups_data["group_mode_enabled"]
+            space.night_mode_enabled = groups_data["night_mode_enabled"]
+
+            # Convert parsed groups to AjaxGroup objects
+            from .models import AjaxGroup, GroupState
+
+            for group_id, group_data in groups_data["groups"].items():
+                # Map string state to GroupState enum
+                state_str = group_data.get("state", "none")
+                if state_str == "armed":
+                    state = GroupState.ARMED
+                elif state_str == "disarmed":
+                    state = GroupState.DISARMED
+                else:
+                    state = GroupState.NONE
+
+                # Create or update the group
+                ajax_group = AjaxGroup(
+                    id=group_id,
+                    name=group_data["name"],
+                    space_id=space_id,
+                    state=state,
+                    night_mode_enabled=group_data.get("night_mode_enabled", False),
+                    bulk_arm_involved=group_data.get("bulk_arm_involved", False),
+                    bulk_disarm_involved=group_data.get("bulk_disarm_involved", False),
+                    image_id=group_data.get("image_id"),
+                )
+
+                space.groups[group_id] = ajax_group
+
+            _LOGGER.info(
+                "Updated space %s with %d groups (group_mode=%s)",
+                space_id,
+                len(space.groups),
+                space.group_mode_enabled,
+            )
+
+        except Exception as err:
+            _LOGGER.exception("Error parsing groups from snapshot: %s", err)
+
     async def _async_process_stream_update(self, space_id: str, success) -> None:
         """Process a single stream update."""
         try:
             # Check if it's a snapshot (initial data) or an update
             if success.HasField("snapshot"):
                 _LOGGER.debug("Received snapshot for space %s", space_id)
-                # Snapshot is the full space data - we already have it from polling
-                # Just trigger a refresh to ensure consistency
+                # Parse groups from the snapshot
+                if hasattr(success.snapshot, "space") and success.snapshot.space:
+                    await self._async_parse_groups_from_snapshot(space_id, success.snapshot.space)
+                # Trigger a refresh to ensure consistency
                 self.async_set_updated_data(self.account)
 
             elif success.HasField("update"):
@@ -256,42 +317,189 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 space = self.account.spaces.get(space_id)
                 if space:
                     try:
-                        # Get regular_mode which contains space_state
-                        mode_value = None
-                        if hasattr(security_mode, "regular_mode"):
+                        # Check if it's group mode
+                        if security_mode.HasField("group_mode"):
+                            from .models import GroupState
+
+                            group_mode = security_mode.group_mode
+                            space.group_mode_enabled = True
+
+                            # Update night mode
+                            if hasattr(group_mode, "night_mode_enabled"):
+                                space.night_mode_enabled = group_mode.night_mode_enabled
+
+                            # Update group states
+                            if hasattr(group_mode, "groups") and group_mode.groups:
+                                for group_security in group_mode.groups:
+                                    group_id = group_security.group_id if hasattr(group_security, "group_id") else None
+                                    if not group_id or group_id not in space.groups:
+                                        continue
+
+                                    group = space.groups[group_id]
+
+                                    # Parse state
+                                    if hasattr(group_security, "state"):
+                                        state_value = group_security.state
+                                        if state_value == 1:  # GROUP_SECURITY_STATE_ARMED
+                                            group.state = GroupState.ARMED
+                                        elif state_value == 2:  # GROUP_SECURITY_STATE_DISARMED
+                                            group.state = GroupState.DISARMED
+                                        else:
+                                            group.state = GroupState.NONE
+
+                                    # Parse night mode for this group
+                                    if hasattr(group_security, "transition") and group_security.transition:
+                                        transition = group_security.transition
+                                        if hasattr(transition, "desired_state") and transition.desired_state:
+                                            desired = transition.desired_state
+                                            if hasattr(desired, "night_mode_enabled"):
+                                                group.night_mode_enabled = desired.night_mode_enabled
+
+                                _LOGGER.debug("Updated %d group states", len(group_mode.groups))
+
+                            # Determine overall space security state based on armed groups
+                            armed_groups = [g for g in space.groups.values() if g.state == GroupState.ARMED]
+                            if not armed_groups:
+                                space.security_state = SecurityState.DISARMED
+                            elif len(armed_groups) == len(space.groups):
+                                space.security_state = SecurityState.ARMED
+                            else:
+                                space.security_state = SecurityState.PARTIALLY_ARMED
+
+                            self.async_set_updated_data(self.account)
+
+                        # Regular mode (not group mode)
+                        elif security_mode.HasField("regular_mode"):
+                            space.group_mode_enabled = False
                             mode_value = security_mode.regular_mode
+
+                            if mode_value and hasattr(mode_value, "space_state"):
+                                # space_state is an enum: 1=ARMED, 2=DISARMED, 3=NIGHT_MODE
+                                state_int = int(mode_value.space_state)
+
+                                # Map to internal state
+                                if state_int == 2:
+                                    new_state = SecurityState.DISARMED
+                                elif state_int == 3:
+                                    new_state = SecurityState.NIGHT_MODE
+                                elif state_int == 1:
+                                    new_state = SecurityState.ARMED
+                                else:
+                                    _LOGGER.warning("Unknown security state value: %d", state_int)
+                                    new_state = None
+
+                                # Update if state changed
+                                if new_state and space.security_state != new_state:
+                                    space.security_state = new_state
+                                    _LOGGER.info(
+                                        "Security mode changed: %s -> %s",
+                                        space.name,
+                                        space.security_state.value
+                                    )
+                                    self.async_set_updated_data(self.account)
+
+                        # Check displayed_security_state as fallback
                         elif hasattr(security_mode, "displayed_security_state"):
                             mode_value = security_mode.displayed_security_state
 
-                        if mode_value and hasattr(mode_value, "space_state"):
-                            # space_state is an enum: 1=ARMED, 2=DISARMED, 3=NIGHT_MODE
-                            state_int = int(mode_value.space_state)
+                            if mode_value and hasattr(mode_value, "space_state"):
+                                state_int = int(mode_value.space_state)
 
-                            # Map to internal state
-                            if state_int == 2:
-                                new_state = SecurityState.DISARMED
-                            elif state_int == 3:
-                                new_state = SecurityState.NIGHT_MODE
-                            elif state_int == 1:
-                                new_state = SecurityState.ARMED
-                            else:
-                                _LOGGER.warning("Unknown security state value: %d", state_int)
-                                new_state = None
+                                if state_int == 2:
+                                    new_state = SecurityState.DISARMED
+                                elif state_int == 3:
+                                    new_state = SecurityState.NIGHT_MODE
+                                elif state_int == 1:
+                                    new_state = SecurityState.ARMED
+                                else:
+                                    _LOGGER.warning("Unknown security state value: %d", state_int)
+                                    new_state = None
 
-                            # Update if state changed
-                            if new_state and space.security_state != new_state:
-                                space.security_state = new_state
-                                _LOGGER.info(
-                                    "Security mode changed: %s -> %s",
-                                    space.name,
-                                    space.security_state.value
-                                )
-                                self.async_set_updated_data(self.account)
+                                if new_state and space.security_state != new_state:
+                                    space.security_state = new_state
+                                    _LOGGER.info(
+                                        "Security mode changed: %s -> %s",
+                                        space.name,
+                                        space.security_state.value
+                                    )
+                                    self.async_set_updated_data(self.account)
+
                     except Exception as mode_err:
                         _LOGGER.error("Error parsing security mode: %s", mode_err)
 
+            # Group update
+            elif update.HasField("group"):
+                group_proto = update.group
+                space = self.account.spaces.get(space_id)
+                if space and hasattr(group_proto, "id"):
+                    await self._async_handle_group_update(space, group_proto, update)
+
         except Exception as err:
             _LOGGER.error("Error handling stream update: %s", err)
+
+    async def _async_handle_group_update(self, space, group_proto, update) -> None:
+        """Handle a group update from the stream.
+
+        Args:
+            space: The AjaxSpace object
+            group_proto: The Group protobuf message
+            update: The Update message containing space_update_type
+        """
+        try:
+            from .models import AjaxGroup, GroupState
+
+            group_id = group_proto.id
+            update_type = update.space_update_type if hasattr(update, "space_update_type") else 0
+
+            # SPACE_UPDATE_TYPE_REMOVE = 3
+            if update_type == 3:
+                # Group was removed
+                if group_id in space.groups:
+                    del space.groups[group_id]
+                    _LOGGER.info("Group %s removed from space %s", group_id, space.name)
+                    self.async_set_updated_data(self.account)
+                return
+
+            # SPACE_UPDATE_TYPE_ADD = 1 or SPACE_UPDATE_TYPE_UPDATE = 2
+            # Extract group metadata
+            group_name = group_proto.name if hasattr(group_proto, "name") else f"Group {group_id}"
+            bulk_arm = group_proto.bulk_arm_involved if hasattr(group_proto, "bulk_arm_involved") else False
+            bulk_disarm = group_proto.bulk_disarm_involved if hasattr(group_proto, "bulk_disarm_involved") else False
+
+            # Extract image ID
+            image_id = None
+            if hasattr(group_proto, "images") and group_proto.images:
+                images = group_proto.images
+                if hasattr(images, "light") and images.light:
+                    image_id = images.light if isinstance(images.light, str) else None
+
+            # Update or create the group
+            if group_id in space.groups:
+                # Update existing group
+                group = space.groups[group_id]
+                group.name = group_name
+                group.bulk_arm_involved = bulk_arm
+                group.bulk_disarm_involved = bulk_disarm
+                group.image_id = image_id
+                _LOGGER.debug("Updated group %s in space %s", group_name, space.name)
+            else:
+                # Create new group (state will be updated later via security_mode updates)
+                group = AjaxGroup(
+                    id=group_id,
+                    name=group_name,
+                    space_id=space.id,
+                    state=GroupState.NONE,
+                    bulk_arm_involved=bulk_arm,
+                    bulk_disarm_involved=bulk_disarm,
+                    image_id=image_id,
+                )
+                space.groups[group_id] = group
+                _LOGGER.info("Added new group %s to space %s", group_name, space.name)
+
+            self.async_set_updated_data(self.account)
+
+        except Exception as err:
+            _LOGGER.exception("Error handling group update: %s", err)
 
 
     async def _async_init_account(self) -> None:
