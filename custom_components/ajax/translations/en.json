@@ -267,6 +267,26 @@
     "arm_partial": {
       "name": "Partial arming",
       "description": "Activate partial arming"
+    },
+    "force_arm": {
+      "name": "Force arm",
+      "description": "Force arm the security system, ignoring open sensors and problems",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "The alarm control panel entity to force arm"
+        }
+      }
+    },
+    "force_arm_night": {
+      "name": "Force arm night mode",
+      "description": "Force activate night mode, ignoring open sensors and problems",
+      "fields": {
+        "entity_id": {
+          "name": "Entity",
+          "description": "The alarm control panel entity to force arm in night mode"
+        }
+      }
     }
   }
 }

@@ -986,13 +986,18 @@ class AjaxApi:
         # For now, return the string representation
         return str(object_type).split(".")[-1].lower() if object_type else "unknown"
 
-    async def async_arm(self, space_id: str) -> None:
-        """Arm the security system."""
+    async def async_arm(self, space_id: str, force: bool = False) -> None:
+        """Arm the security system.
+
+        Args:
+            space_id: The space ID to arm
+            force: If True, ignore alarms and force arm even with open sensors or problems
+        """
         if not self.session_token:
             raise AjaxAuthError("Not authenticated")
 
         try:
-            _LOGGER.info("Arming space: %s", space_id)
+            _LOGGER.info("Arming space: %s (force=%s)", space_id, force)
 
             # Create space locator
             space_locator = space_locator_pb2.SpaceLocator(space_id=space_id)
@@ -1000,7 +1005,7 @@ class AjaxApi:
             # Create arm request
             request = arm_request_pb2.ArmSpaceRequest(
                 space_locator=space_locator,
-                ignore_alarms=False,
+                ignore_alarms=force,
             )
 
             # Create stub and call service
@@ -1087,13 +1092,18 @@ class AjaxApi:
                 raise AjaxAuthError("Session expired") from err
             raise AjaxApiError(f"gRPC error: {err}") from err
 
-    async def async_arm_night_mode(self, space_id: str) -> None:
-        """Activate night mode."""
+    async def async_arm_night_mode(self, space_id: str, force: bool = False) -> None:
+        """Activate night mode.
+
+        Args:
+            space_id: The space ID to arm in night mode
+            force: If True, ignore alarms and force arm even with open sensors or problems
+        """
         if not self.session_token:
             raise AjaxAuthError("Not authenticated")
 
         try:
-            _LOGGER.info("Arming space to night mode: %s", space_id)
+            _LOGGER.info("Arming space to night mode: %s (force=%s)", space_id, force)
 
             # Create space locator
             space_locator = space_locator_pb2.SpaceLocator(space_id=space_id)
@@ -1101,7 +1111,7 @@ class AjaxApi:
             # Create arm to night mode request
             request = arm_to_night_mode_request_pb2.ArmSpaceToNightModeRequest(
                 space_locator=space_locator,
-                ignore_alarms=False,
+                ignore_alarms=force,
             )
 
             # Create stub and call service

@@ -1,0 +1,37 @@
+# Ajax integration services
+
+force_arm:
+  name: Force arm
+  description: Force arm the security system, ignoring open sensors and problems
+  target:
+    entity:
+      integration: ajax
+      domain: alarm_control_panel
+  fields:
+    entity_id:
+      name: Entity
+      description: The alarm control panel entity to force arm
+      required: true
+      example: "alarm_control_panel.ajax_alarm_home"
+      selector:
+        entity:
+          integration: ajax
+          domain: alarm_control_panel
+
+force_arm_night:
+  name: Force arm night mode
+  description: Force activate night mode, ignoring open sensors and problems
+  target:
+    entity:
+      integration: ajax
+      domain: alarm_control_panel
+  fields:
+    entity_id:
+      name: Entity
+      description: The alarm control panel entity to force arm in night mode
+      required: true
+      example: "alarm_control_panel.ajax_alarm_home"
+      selector:
+        entity:
+          integration: ajax
+          domain: alarm_control_panel

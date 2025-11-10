@@ -25,7 +25,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, get_event_message
 from .coordinator import AjaxDataCoordinator
 from .models import AjaxDevice, AjaxSpace, DeviceType
 
@@ -416,19 +416,34 @@ class AjaxSpaceSensor(CoordinatorEntity[AjaxDataCoordinator], SensorEntity):
             # Get the latest alert/security event
             for notification in space.notifications:
                 if notification.type.value in ["alarm", "security_event"]:
-                    attributes["event_type"] = notification.title
-                    attributes["device_name"] = notification.device_name
-                    attributes["device_id"] = notification.device_id
-                    attributes["notification_type"] = notification.type.value
-                    attributes["message"] = notification.message
-
-                    # Get room info if device_id is available
+                    # Get room name if available
+                    room_name = None
                     if notification.device_id and notification.device_id in space.devices:
                         device = space.devices[notification.device_id]
                         if device.room_id and device.room_id in space.rooms:
                             room = space.rooms[device.room_id]
+                            room_name = room.name
                             attributes["room_name"] = room.name
                             attributes["room_id"] = room.id
+
+                    # Format message like the Ajax app
+                    # Get language from Home Assistant (default to English)
+                    language = self.hass.config.language if self.hass.config.language in ["en", "fr"] else "en"
+
+                    # Create human-readable message
+                    formatted_message = get_event_message(
+                        notification.title,
+                        language=language,
+                        device_name=notification.device_name,
+                        room_name=room_name,
+                    )
+
+                    attributes["event_type"] = notification.title  # Keep raw event type
+                    attributes["device_name"] = notification.device_name
+                    attributes["device_id"] = notification.device_id
+                    attributes["notification_type"] = notification.type.value
+                    attributes["message"] = formatted_message  # Use formatted message
+                    attributes["raw_message"] = notification.message  # Keep original
                     break
 
         # Add room breakdown for device-related sensors

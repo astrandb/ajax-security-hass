@@ -308,6 +308,26 @@
     "arm_partial": {
       "name": "Armement partiel",
       "description": "Active l'armement partiel"
+    },
+    "force_arm": {
+      "name": "Armement forcé",
+      "description": "Force l'armement du système de sécurité, en ignorant les capteurs ouverts et les problèmes",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "L'entité du panneau d'alarme à forcer d'armer"
+        }
+      }
+    },
+    "force_arm_night": {
+      "name": "Mode nuit forcé",
+      "description": "Force l'activation du mode nuit, en ignorant les capteurs ouverts et les problèmes",
+      "fields": {
+        "entity_id": {
+          "name": "Entité",
+          "description": "L'entité du panneau d'alarme à forcer en mode nuit"
+        }
+      }
     }
   }
 }

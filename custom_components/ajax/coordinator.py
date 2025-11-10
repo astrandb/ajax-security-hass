@@ -17,7 +17,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import AjaxApi, AjaxApiError, AjaxAuthError
-from .const import DOMAIN, UPDATE_INTERVAL
+from .const import DOMAIN, UPDATE_INTERVAL, get_event_message
 from .models import (
     AjaxAccount,
     AjaxDevice,
@@ -202,13 +202,31 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 # Determine notification type
                 notif_type = self._parse_notification_type(event_type)
 
+                # Get room name if available
+                room_name = None
+                if device_id and device_id in space.devices:
+                    device = space.devices[device_id]
+                    if device.room_id and device.room_id in space.rooms:
+                        room_name = space.rooms[device.room_id].name
+
+                # Get language from Home Assistant (default to English)
+                language = self.hass.config.language if self.hass.config.language in ["en", "fr"] else "en"
+
+                # Format message like the Ajax app
+                formatted_message = get_event_message(
+                    event_type,
+                    language=language,
+                    device_name=device_name,
+                    room_name=room_name,
+                )
+
                 # Create notification object
                 notification = AjaxNotification(
                     id=notification_data.get("id", ""),
                     space_id=space_id,
                     type=notif_type,
-                    title=event_type.replace("_", " ").title() if event_type else "Event",
-                    message=f"{device_name}: {event_type.replace('_', ' ')}" if event_type else "",
+                    title=event_type,  # Keep raw event type for filtering/processing
+                    message=formatted_message,  # Use formatted message
                     timestamp=timestamp,
                     device_id=device_id,
                     device_name=device_name,
@@ -226,9 +244,8 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
                 # Trigger update
                 _LOGGER.info(
-                    "Real-time notification: %s - %s (%s)",
-                    device_name,
-                    event_type,
+                    "Real-time notification: %s (%s)",
+                    formatted_message,
                     timestamp.strftime("%H:%M:%S"),
                 )
                 self.async_set_updated_data(self.account)
@@ -937,12 +954,17 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
     # Control methods
     # ============================================================================
 
-    async def async_arm_space(self, space_id: str) -> None:
-        """Arm a space."""
-        _LOGGER.info("Arming space %s", space_id)
+    async def async_arm_space(self, space_id: str, force: bool = False) -> None:
+        """Arm a space.
+
+        Args:
+            space_id: The space ID to arm
+            force: If True, ignore alarms and force arm even with open sensors or problems
+        """
+        _LOGGER.info("Arming space %s (force=%s)", space_id, force)
 
         try:
-            await self.api.async_arm(space_id)
+            await self.api.async_arm(space_id, force=force)
 
             # Update local state optimistically
             if space_id in self.account.spaces:
@@ -973,12 +995,17 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             _LOGGER.error("Failed to disarm space %s: %s", space_id, err)
             raise
 
-    async def async_arm_night_mode(self, space_id: str) -> None:
-        """Activate night mode for a space."""
-        _LOGGER.info("Activating night mode for space %s", space_id)
+    async def async_arm_night_mode(self, space_id: str, force: bool = False) -> None:
+        """Activate night mode for a space.
+
+        Args:
+            space_id: The space ID to arm in night mode
+            force: If True, ignore alarms and force arm even with open sensors or problems
+        """
+        _LOGGER.info("Activating night mode for space %s (force=%s)", space_id, force)
 
         try:
-            await self.api.async_arm_night_mode(space_id)
+            await self.api.async_arm_night_mode(space_id, force=force)
 
             # Update local state optimistically
             if space_id in self.account.spaces:
