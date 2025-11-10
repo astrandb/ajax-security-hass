@@ -190,7 +190,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                     return
 
                 # Extract event details
-                event_type = notification_data.get("event_type", "")
+                event_type = notification_data.get("event_type", "") or ""
                 device_id = notification_data.get("device_id")
                 device_name = notification_data.get("device_name", "Device")
                 timestamp = notification_data.get("timestamp") or datetime.now(timezone.utc)
@@ -212,13 +212,17 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 # Get language from Home Assistant (default to English)
                 language = self.hass.config.language if self.hass.config.language in ["en", "fr"] else "en"
 
-                # Format message like the Ajax app
-                formatted_message = get_event_message(
-                    event_type,
-                    language=language,
-                    device_name=device_name,
-                    room_name=room_name,
-                )
+                # Format message like the Ajax app (only if event_type is not empty)
+                if event_type:
+                    formatted_message = get_event_message(
+                        event_type,
+                        language=language,
+                        device_name=device_name,
+                        room_name=room_name,
+                    )
+                else:
+                    # Fallback for notifications without event_type (e.g., arming/disarming)
+                    formatted_message = notification_data.get("message", "") or device_name
 
                 # Create notification object
                 notification = AjaxNotification(
