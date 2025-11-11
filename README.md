@@ -1,7 +1,6 @@
 # Ajax Security System Integration for Home Assistant
 
-<img width="100%" alt="Ajax-HASS" src="./ajax-header-400x400.png" />
-
+![Header](ajax-header-400x400.png)
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -355,6 +354,16 @@ Your contributions help improve this project and add new features. Thank you! �
 Cette intégration est **activement développée** mais je débute avec les systèmes de sécurité Ajax. Je possède actuellement et teste avec :
 - ✅ **Hub 2 Plus**
 - ✅ **MotionCam** (Détecteur de mouvement avec prise de photo)
+
+Testé par les contributeurs:
+- ✅ **Superior Hub Hybrid 4G**
+- ✅ **KeyPad TouchScreen Jeweller** (peu de remontées d'infos)
+- ✅ **Superior DoorProtect Plus Jeweller**
+- ✅ **FireProtect 2 RB (Heat/Smoke Jeweller)**
+- ✅ **Superior HomeSiren Jeweller**
+- ✅ **ReX 2 Jeweller**
+- ✅ **StreetSiren Jeweller**
+- ✅ **Superior MotionCam (PhOD) Jeweller**
 
 N'ayant pas encore accès à tous les appareils Ajax, **je ne peux pas tester tous les types d'appareils**. Cependant, l'intégration est construite sur l'API officielle Ajax et devrait théoriquement fonctionner avec tous les appareils Ajax.
 
