@@ -2,10 +2,10 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4
     hooks:
-      # Run the linter
+      # Run the linter only (no formatting due to protobuf import dependencies)
       - id: ruff
         args: [--fix]
         exclude: ^custom_components/ajax/.*_pb2(_grpc)?\.py$
-      # Run the formatter
-      - id: ruff-format
-        exclude: ^custom_components/ajax/.*_pb2(_grpc)?\.py$
+      # Formatter disabled - protobuf files have strict import order requirements
+      # - id: ruff-format
+      #   exclude: ^custom_components/ajax/.*_pb2(_grpc)?\.py$
