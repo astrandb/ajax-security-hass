@@ -1,6 +1,6 @@
 # Ajax Security System Integration for Home Assistant
 
-<img width="100%" alt="Ajax-HASS" src="./ajax-header-600x600.png" />
+<img width="100%" alt="Ajax-HASS" src="./ajax-header-400x400.png" />
 
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
