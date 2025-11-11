@@ -5,6 +5,26 @@ All notable changes to the Ajax Security System integration will be documented i
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.10] - 2025-11-11
+
+### Fixed
+- **Fixed door sensor incorrect state at startup** (Fixes #30)
+  - Door sensors now correctly show their actual state at startup
+  - Historical notifications no longer update device states
+  - Device state now only comes from real-time device snapshot and live stream updates
+  - Previously, if the last notification was "door_opened", the sensor would incorrectly show as open even if the door was closed
+- **Fixed 2FA authentication flow** (Fixes #29)
+  - Fixed exception handling order that prevented 2FA from working
+  - 2FA now properly triggers the TOTP code input step
+  - Two-factor authentication is now fully functional
+
+### Security
+- **Improved password security**
+  - Passwords are now stored as SHA256 hashes in Home Assistant config entries
+  - Added automatic migration from plaintext to hashed passwords (config entry v1 → v2)
+  - Passwords are hashed before being sent to Ajax API servers
+  - Session tokens are reused to avoid repeated 2FA prompts
+
 ## [0.4.9] - 2025-11-11
 
 ### Fixed
