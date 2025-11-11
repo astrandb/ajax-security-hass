@@ -8,6 +8,7 @@ DOMAIN = "ajax"
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 CONF_DEVICE_ID = "device_id"
+CONF_SESSION_TOKEN = "session_token"
 
 # Options
 CONF_PERSISTENT_NOTIFICATION = "persistent_notification"

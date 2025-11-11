@@ -966,9 +966,9 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
                 space.notifications.append(notification)
 
-                # Update device state based on notification event
-                if notification.device_id:
-                    self._update_device_from_notification(space, notification)
+                # Note: We do NOT update device state from historical notifications
+                # Device state comes from the real-time device snapshot only
+                # Real-time notification updates happen via the stream (async_stream_notification_updates)
 
             # Update unread count
             space.unread_notifications = sum(1 for n in space.notifications if not n.read)
