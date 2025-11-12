@@ -60,9 +60,18 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
         key="motion",
         translation_key="motion",
         device_class=BinarySensorDeviceClass.MOTION,
-        value_fn=lambda device: device.is_triggered if device.type == DeviceType.MOTION_DETECTOR else device.attributes.get("motion_detected", False),
-        should_create=lambda device: device.type == DeviceType.MOTION_DETECTOR
+        value_fn=lambda device: device.is_triggered if device.type in [DeviceType.MOTION_DETECTOR, DeviceType.COMBI_PROTECT] else device.attributes.get("motion_detected", False),
+        should_create=lambda device: device.type in [DeviceType.MOTION_DETECTOR, DeviceType.COMBI_PROTECT]
         or "motion_detected" in device.attributes,
+        enabled_by_default=True,
+    ),
+    AjaxBinarySensorDescription(
+        key="glass_break",
+        translation_key="glass_break",
+        device_class=BinarySensorDeviceClass.VIBRATION,
+        value_fn=lambda device: device.attributes.get("glass_break_detected", False),
+        should_create=lambda device: device.type in [DeviceType.GLASS_BREAK, DeviceType.COMBI_PROTECT]
+        or "glass_break_detected" in device.attributes,
         enabled_by_default=True,
     ),
     AjaxBinarySensorDescription(
@@ -102,6 +111,7 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
                 DeviceType.MOTION_DETECTOR,
                 DeviceType.DOOR_CONTACT,
                 DeviceType.GLASS_BREAK,
+                DeviceType.COMBI_PROTECT,
                 DeviceType.SMOKE_DETECTOR,
                 DeviceType.FLOOD_DETECTOR,
                 DeviceType.TEMPERATURE_SENSOR,
@@ -120,6 +130,7 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
                 DeviceType.MOTION_DETECTOR,
                 DeviceType.DOOR_CONTACT,
                 DeviceType.GLASS_BREAK,
+                DeviceType.COMBI_PROTECT,
                 DeviceType.SMOKE_DETECTOR,
                 DeviceType.FLOOD_DETECTOR,
                 DeviceType.TEMPERATURE_SENSOR,

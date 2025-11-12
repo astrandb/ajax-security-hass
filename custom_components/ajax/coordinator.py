@@ -1271,6 +1271,11 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             "pir": DeviceType.MOTION_DETECTOR,
             "motionprotect": DeviceType.MOTION_DETECTOR,
 
+            # Combi detectors (motion + glass break)
+            "combi_protect": DeviceType.COMBI_PROTECT,
+            "combiprotect": DeviceType.COMBI_PROTECT,
+            "combi": DeviceType.COMBI_PROTECT,
+
             # Door/Window contacts
             "door_protect": DeviceType.DOOR_CONTACT,
             "doorprotect": DeviceType.DOOR_CONTACT,

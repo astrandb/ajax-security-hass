@@ -34,6 +34,7 @@ class DeviceType(Enum):
     MOTION_DETECTOR = "motion_detector"
     DOOR_CONTACT = "door_contact"
     GLASS_BREAK = "glass_break"
+    COMBI_PROTECT = "combi_protect"  # Combined motion + glass break detector
     SMOKE_DETECTOR = "smoke_detector"
     FLOOD_DETECTOR = "flood_detector"
     TEMPERATURE_SENSOR = "temperature_sensor"
