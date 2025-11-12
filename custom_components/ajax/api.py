@@ -842,12 +842,25 @@ class AjaxApi:
 
                         # Signal strength
                         elif status.HasField("signal_strength"):
+                            _LOGGER.debug("Device %s has signal_strength status", profile.name)
                             if hasattr(status.signal_strength, "device_signal_level"):
-                                signal_str = str(status.signal_strength.device_signal_level).split("_")[-1]
+                                signal_raw = str(status.signal_strength.device_signal_level)
+                                _LOGGER.debug("Device %s signal from statuses (raw): %s", profile.name, signal_raw)
+
+                                # Handle both text and numeric enum formats
+                                if signal_raw.isdigit():
+                                    # Numeric enum: 0=NO_INFO, 1=NO_SIGNAL, 2=WEAK, 3=NORMAL, 4=STRONG
+                                    signal_num_map = {0: "UNKNOWN", 1: "NO_SIGNAL", 2: "WEAK", 3: "NORMAL", 4: "STRONG"}
+                                    signal_str = signal_num_map.get(int(signal_raw), "NORMAL")
+                                else:
+                                    signal_str = signal_raw.split("_")[-1]
+
+                                _LOGGER.debug("Device %s signal level: %s", profile.name, signal_str)
                                 # Convert to percentage estimate
-                                signal_map = {"WEAK": 25, "NORMAL": 50, "STRONG": 75, "EXCELLENT": 100}
+                                signal_map = {"NO_SIGNAL": 0, "WEAK": 25, "NORMAL": 50, "STRONG": 75, "EXCELLENT": 100}
                                 device_data["signal_strength"] = signal_map.get(signal_str, 50)
                                 attributes["signal_level"] = signal_str
+                                _LOGGER.debug("Device %s signal_strength: %s%%", profile.name, device_data["signal_strength"])
 
                     except (ValueError, AttributeError) as e:
                         # Some status fields may not exist on all devices
@@ -1007,6 +1020,63 @@ class AjaxApi:
                     _LOGGER.debug("Device %s has %d device_specific_properties", profile.name, len(hub_dev.device_specific_properties))
                     for idx, prop in enumerate(hub_dev.device_specific_properties):
                         _LOGGER.debug("  device_specific_property[%d]: %s", idx, prop)
+
+                # Parse common_part fields (temperature, battery, night_mode_arm, etc.)
+                # All device types have a common_part field with common device properties
+                device_specific = None
+                for field in hub_dev.DESCRIPTOR.fields:
+                    if hub_dev.HasField(field.name) and field.name not in ['common_device']:
+                        device_specific = getattr(hub_dev, field.name)
+                        break
+
+                if device_specific and hasattr(device_specific, 'common_part'):
+                    common_part = device_specific.common_part
+
+                    # Temperature
+                    if hasattr(common_part, 'temperature') and common_part.temperature:
+                        attributes["temperature"] = common_part.temperature
+
+                    # Battery level
+                    if hasattr(common_part, 'battery_charge_level_percentage') and common_part.battery_charge_level_percentage:
+                        device_data["battery_level"] = common_part.battery_charge_level_percentage
+
+                    # Night mode arm
+                    if hasattr(common_part, 'night_mode_arm'):
+                        attributes["armed_in_night_mode"] = common_part.night_mode_arm
+
+                    # Tampered status
+                    if hasattr(common_part, 'tampered'):
+                        attributes["tampered"] = common_part.tampered
+
+                    # Firmware version (if not already set from statuses)
+                    if device_data["firmware_version"] is None and hasattr(common_part, 'firmware_version') and common_part.firmware_version:
+                        device_data["firmware_version"] = common_part.firmware_version
+
+                    # Signal level (if not already set from statuses)
+                    if device_data["signal_strength"] is None and hasattr(common_part, 'signal_level'):
+                        signal_raw = str(common_part.signal_level)
+                        _LOGGER.debug("Device %s signal from common_part (raw): %s", profile.name, signal_raw)
+
+                        # Handle both text and numeric enum formats
+                        if signal_raw.isdigit():
+                            # Numeric enum: 0=NO_INFO, 1=NO_SIGNAL, 2=WEAK, 3=NORMAL, 4=STRONG
+                            signal_num_map = {0: "UNKNOWN", 1: "NO_SIGNAL", 2: "WEAK", 3: "NORMAL", 4: "STRONG"}
+                            signal_str = signal_num_map.get(int(signal_raw), "NORMAL")
+                        else:
+                            signal_str = signal_raw.split("_")[-1]
+
+                        _LOGGER.debug("Device %s signal level: %s", profile.name, signal_str)
+                        # Convert to percentage estimate
+                        signal_map = {"NO_SIGNAL": 0, "WEAK": 25, "NORMAL": 50, "STRONG": 75, "EXCELLENT": 100}
+                        device_data["signal_strength"] = signal_map.get(signal_str, 50)
+                        attributes["signal_level"] = signal_str
+                        _LOGGER.debug("Device %s signal_strength: %s%%", profile.name, device_data["signal_strength"])
+
+                # Parse device-specific fields (e.g., external_contact_always_active for Transmitter)
+                if device_specific:
+                    # Transmitter: external_contact_always_active
+                    if hasattr(device_specific, 'external_contact_always_active'):
+                        attributes["always_active"] = device_specific.external_contact_always_active
 
                 # Add default values for always_active and armed_in_night_mode if not set
                 # (these fields only appear when True, but we want to show them as False when absent)
