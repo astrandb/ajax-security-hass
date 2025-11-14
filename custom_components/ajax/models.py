@@ -219,6 +219,7 @@ class AjaxNotification:
     device_name: str | None = None
     read: bool = False
     media_url: str | None = None
+    user_name: str | None = None  # Name of user/device who triggered the event
 
     def __str__(self) -> str:
         return f"Notification({self.type.value}: {self.title})"

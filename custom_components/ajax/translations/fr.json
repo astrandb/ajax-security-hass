@@ -327,6 +327,9 @@
       "external_power": {
         "name": "Alimentation externe"
       },
+      "tampered": {
+        "name": "Sabotage"
+      },
       "always_active": {
         "name": "Toujours actif"
       },

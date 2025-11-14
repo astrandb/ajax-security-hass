@@ -286,6 +286,9 @@
       "external_power": {
         "name": "External power"
       },
+      "tampered": {
+        "name": "Tampered"
+      },
       "always_active": {
         "name": "Always active"
       },

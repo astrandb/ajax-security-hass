@@ -677,9 +677,27 @@ class AjaxApi:
                                 detected_at
                             )
 
+                    # Wire input status (for EOL sensors and potentially door close events)
+                    # IMPORTANT: Process this BEFORE door_opened to prevent wire_input devices from being overwritten
+                    # According to protobuf analysis: is_alert = True means open/alert, False means closed/normal
+                    if hasattr(status, "wire_input_status") and status.HasField("wire_input_status"):
+                        wire_status = status.wire_input_status
+                        if hasattr(wire_status, "is_alert"):
+                            is_alert = wire_status.is_alert
+                            status_data["wire_input_alert"] = is_alert
+                            # For wire_input devices, use is_alert for door_opened state
+                            status_data["door_opened"] = is_alert
+
+                            _LOGGER.info(
+                                "Wire input alert on device %s: %s",
+                                update_data["device_id"],
+                                is_alert
+                            )
+
                     # Door status
                     # Check if door_opened field exists and is set
-                    if hasattr(status, "door_opened"):
+                    # Skip this if wire_input_status already set the door_opened state
+                    if hasattr(status, "door_opened") and "door_opened" not in status_data:
                         # Check if the field is actually set
                         if status.HasField("door_opened"):
                             status_data["door_opened"] = True
@@ -690,17 +708,6 @@ class AjaxApi:
                             _LOGGER.debug("Door closed on device %s", update_data["device_id"])
 
                     # Tamper detection removed - was causing issues with buggy sensors
-
-                    # Wire input status (EOL sensors)
-                    if hasattr(status, "wire_input_status") and status.HasField("wire_input_status"):
-                        wire_status = status.wire_input_status
-                        if hasattr(wire_status, "is_alert"):
-                            status_data["wire_input_alert"] = wire_status.is_alert
-                            _LOGGER.info(
-                                "Wire input alert on device %s: %s",
-                                update_data["device_id"],
-                                wire_status.is_alert
-                            )
 
                     # External contact broken
                     if hasattr(status, "external_contact_broken") and status.HasField("external_contact_broken"):
@@ -724,11 +731,20 @@ class AjaxApi:
             elif hasattr(update, "snapshot_update") and update.HasField("snapshot_update"):
                 snapshot_update = update.snapshot_update
                 update_data["update_type"] = "snapshot"
+                _LOGGER.info(
+                    "Received snapshot_update for device %s",
+                    update_data.get("device_id")
+                )
                 if hasattr(snapshot_update, "light_device"):
                     # Full device update - parse like a normal device
                     device_data = self._parse_light_device(snapshot_update.light_device)
                     if device_data:
                         update_data["device_data"] = device_data
+                        _LOGGER.info(
+                            "Snapshot update for device %s: door_opened=%s",
+                            device_data.get("id"),
+                            device_data.get("attributes", {}).get("door_opened")
+                        )
 
                 # DEBUG: Log snapshot_update for door sensor
                 if update_data.get("device_id") == "30DD9A8B":
@@ -1029,9 +1045,18 @@ class AjaxApi:
                             else:
                                 sim_status_str = sim_status_raw
 
+                            # Determine if SIM is installed
+                            # Status can be string (e.g., "OK", "MISSING") or numeric (e.g., "0", "1", "2")
+                            # Numeric values: 0 or 1 = OK/NO_INFO (installed), 2+ = MISSING/MALFUNCTION/etc (not installed)
+                            if sim_status_str.isdigit():
+                                sim_status_num = int(sim_status_str)
+                                installed = sim_status_num in [0, 1]  # 0=NO_INFO, 1=OK
+                            else:
+                                installed = sim_status_str == "OK"
+
                             sim_info = {
                                 "status": sim_status_str,
-                                "installed": sim_status_str not in ["MISSING", "NOT_INSTALLED", "2"],
+                                "installed": installed,
                             }
 
                             # Check if there's a slot number or if this is aggregated data
@@ -1209,6 +1234,11 @@ class AjaxApi:
                             if hasattr(gsm, "network_status"):
                                 network_status_str = str(gsm.network_status).split("_")[-1]
                                 attributes["network_status"] = network_status_str
+                            if hasattr(gsm, "gprs_enabled"):
+                                attributes["gprs_enabled"] = gsm.gprs_enabled
+                                _LOGGER.debug("Hub GSM gprs_enabled: %s", gsm.gprs_enabled)
+                            else:
+                                _LOGGER.debug("Hub GSM does not have gprs_enabled attribute")
                     except (ValueError, AttributeError) as e:
                         _LOGGER.debug("Could not parse GSM data: %s", e)
 
@@ -2099,6 +2129,7 @@ class AjaxApi:
                 "event_type": None,
                 "title": None,
                 "message": None,
+                "user_name": None,  # User/device who triggered the event
             }
 
             # Parse timestamp
@@ -2180,6 +2211,8 @@ class AjaxApi:
                             space_source = space_content.space_source
                             if hasattr(space_source, "name") and space_source.name:
                                 source_name = space_source.name
+                                # Store user name separately for easy access
+                                notification_data["user_name"] = source_name
                                 # Append source to message if we have a message
                                 if notification_data.get("message"):
                                     notification_data["message"] = f"{notification_data['message']} par {source_name}"

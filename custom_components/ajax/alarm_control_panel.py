@@ -155,6 +155,15 @@ class AjaxAlarmControlPanel(CoordinatorEntity[AjaxDataCoordinator], AlarmControl
             "bypassed_devices": len(space.get_bypassed_devices()),
         }
 
+        # Add changed_by attribute from latest arm/disarm notification
+        if space.notifications:
+            for notification in space.notifications:
+                # Check for arm/disarm events
+                if notification.title in ["armed", "disarmed", "night_mode_on", "partially_armed"]:
+                    if notification.user_name:
+                        attributes["changed_by"] = notification.user_name
+                    break
+
         # Add room information
         if space.rooms:
             attributes["rooms"] = {

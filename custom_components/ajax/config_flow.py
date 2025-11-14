@@ -323,20 +323,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
             return self.async_create_entry(title="", data=user_input)
 
-        # Fetch available spaces
+        # Get available spaces from the running coordinator instead of reconnecting
+        # This avoids 2FA issues and is more efficient
         try:
-            from .api import AjaxApi
-            api = AjaxApi(
-                self.config_entry.data[CONF_EMAIL],
-                self.config_entry.data[CONF_PASSWORD],
-                self.config_entry.data[CONF_DEVICE_ID],
-                password_is_hashed=True,
-            )
-            await api.async_login()
-            self._spaces = await api.async_get_spaces()
-            await api.close()
+            from . import DOMAIN
+            coordinator = self.hass.data[DOMAIN].get(self.config_entry.entry_id)
+            if coordinator and coordinator.account and coordinator.account.spaces:
+                self._spaces = [
+                    {"id": space.id, "name": space.name}
+                    for space in coordinator.account.spaces.values()
+                ]
+            else:
+                _LOGGER.warning("Could not get spaces from coordinator, using empty list")
+                self._spaces = []
         except Exception as err:
-            _LOGGER.exception("Error fetching spaces in options: %s", err)
+            _LOGGER.exception("Error fetching spaces from coordinator: %s", err)
             self._spaces = []
 
         # Get currently selected spaces (default to all if not set)

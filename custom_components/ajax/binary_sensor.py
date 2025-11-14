@@ -182,7 +182,15 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.POWER,
         icon="mdi:power-plug",
         value_fn=lambda device: not device.attributes.get("external_power_loss", False),
-        should_create=lambda device: device.type == DeviceType.HUB,
+        should_create=lambda device: device.type in [DeviceType.HUB, DeviceType.REPEATER],
+        enabled_by_default=True,
+    ),
+    AjaxBinarySensorDescription(
+        key="tampered",
+        translation_key="tampered",
+        device_class=BinarySensorDeviceClass.TAMPER,
+        value_fn=lambda device: device.attributes.get("tampered", False),
+        should_create=lambda device: "tampered" in device.attributes,
         enabled_by_default=True,
     ),
     AjaxBinarySensorDescription(
@@ -191,7 +199,10 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:signal-cellular-3",
         value_fn=lambda device: not device.attributes.get("cellular_signal_low", False),
-        should_create=lambda device: device.type == DeviceType.HUB and device.attributes.get("sim_slots_used", 0) > 0,
+        should_create=lambda device: (
+            device.type == DeviceType.HUB
+            and device.attributes.get("sim_slots_used", 0) > 0
+        ),
         enabled_by_default=True,
     ),
     AjaxBinarySensorDescription(
@@ -200,7 +211,10 @@ BINARY_SENSORS: tuple[AjaxBinarySensorDescription, ...] = (
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         icon="mdi:antenna",
         value_fn=lambda device: not (device.attributes.get("gsm_antenna_damaged", False) or device.attributes.get("gsm_antenna_disconnected", False)),
-        should_create=lambda device: device.type == DeviceType.HUB and device.attributes.get("sim_slots_used", 0) > 0,
+        should_create=lambda device: (
+            device.type == DeviceType.HUB
+            and device.attributes.get("sim_slots_used", 0) > 0
+        ),
         enabled_by_default=True,
     ),
     AjaxBinarySensorDescription(

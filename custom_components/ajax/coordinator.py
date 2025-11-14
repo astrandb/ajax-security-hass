@@ -70,6 +70,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         self._fast_poll_tasks: dict[str, asyncio.Task] = {}  # device_id -> fast polling task for door sensors
         self._groups_loaded_events: dict[str, asyncio.Event] = {}  # space_id -> event triggered when groups are loaded
         self._wire_input_polling_tasks: dict[str, asyncio.Task] = {}  # space_id -> wire_input polling task
+        self._initial_load_done: bool = False  # Track if initial data load is complete
 
         super().__init__(
             hass,
@@ -82,41 +83,53 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         """Fetch data from Ajax API.
 
         This is called periodically, but we also use streaming for real-time updates.
+        On first load, we fetch all data. On subsequent updates, we rely on streaming.
         """
         try:
             # Initialize account if needed
             if self.account is None:
                 await self._async_init_account()
 
-            # Update spaces
-            await self._async_update_spaces()
+            # Only do full data load on first run or manual reload
+            # After that, rely on streaming for real-time updates
+            if not self._initial_load_done:
+                _LOGGER.debug("Performing initial/full data load")
 
-            # Update devices for each space
-            for space_id in self.account.spaces.keys():
-                await self._async_update_devices(space_id)
+                # Update spaces
+                await self._async_update_spaces()
 
-            # Reset expired motion detections (only for motion detectors)
-            for space_id in self.account.spaces.keys():
-                space = self.account.spaces.get(space_id)
-                if space:
-                    self._reset_expired_motion_detections(space)
+                # Update devices for each space
+                for space_id in self.account.spaces.keys():
+                    await self._async_update_devices(space_id)
 
-            # Update notifications (last 50)
-            for space_id in self.account.spaces.keys():
-                await self._async_update_notifications(space_id, limit=50)
+                # Update notifications (last 50)
+                for space_id in self.account.spaces.keys():
+                    await self._async_update_notifications(space_id, limit=50)
 
-            # Create events for waiting on groups to be loaded from stream
-            for space_id in self.account.spaces.keys():
-                if space_id not in self._groups_loaded_events:
-                    self._groups_loaded_events[space_id] = asyncio.Event()
+                # Create events for waiting on groups to be loaded from stream
+                for space_id in self.account.spaces.keys():
+                    if space_id not in self._groups_loaded_events:
+                        self._groups_loaded_events[space_id] = asyncio.Event()
 
-            # Start real-time streaming tasks for each space (if not already started)
-            await self._async_start_streaming_tasks()
+                # Start real-time streaming tasks for each space (if not already started)
+                await self._async_start_streaming_tasks()
 
-            # Wait for groups to be loaded from stream (with timeout)
-            # This ensures group/zone entities are created during first setup
-            if self.account:
-                await self._async_wait_for_groups()
+                # Wait for groups to be loaded from stream (with timeout)
+                # This ensures group/zone entities are created during first setup
+                if self.account:
+                    await self._async_wait_for_groups()
+
+                # Mark initial load as complete
+                self._initial_load_done = True
+                _LOGGER.debug("Initial data load complete, relying on streaming for updates")
+            else:
+                # Periodic update - just reset expired motion detections
+                # Everything else is handled by streaming
+                _LOGGER.debug("Periodic update - resetting expired motion detections")
+                for space_id in self.account.spaces.keys():
+                    space = self.account.spaces.get(space_id)
+                    if space:
+                        self._reset_expired_motion_detections(space)
 
             return self.account
 
@@ -809,6 +822,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                     device_id=device_id,
                     device_name=device_name,
                     read=notification_data.get("read", False),
+                    user_name=notification_data.get("user_name"),  # User who triggered the event
                 )
 
                 # Add to space notifications list (keep only last 50)
@@ -1514,6 +1528,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                     device_id=notif_data.get("device_id"),
                     device_name=notif_data.get("device_name"),
                     read=notif_data.get("read", False),
+                    user_name=notif_data.get("user_name"),  # User who triggered the event
                 )
 
                 space.notifications.append(notification)
