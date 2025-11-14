@@ -9,7 +9,7 @@
 [![PayPal](https://img.shields.io/badge/PayPal-Donate-00457C?logo=paypal&logoColor=white)](https://paypal.me/foXaCe66)
 [![Community Forum](https://img.shields.io/badge/Home_Assistant-Community-blue?logo=home-assistant)](https://community.home-assistant.io/t/custom-component-ajax-systems/948939/2)
 
-**Full-featured** Home Assistant integration for Ajax Security Systems via the official Cloud API with **real-time synchronization**.
+**Full-featured** Home Assistant integration for Ajax Security Systems**.
 
 [Version française ci-dessous](#version-française)
 
@@ -29,7 +29,7 @@ Users tested:
 - ✅ **StreetSiren Jeweller**
 - ✅ **Superior MotionCam (PhOD) Jeweller**
 
-Since I don't have access to all Ajax devices yet, **I cannot test every device type**. However, the integration is built on Ajax's official API and should theoretically work with all Ajax devices.
+Since I don't have access to all Ajax devices yet, **I cannot test every device type**.
 
 **🤝 Community Help Needed**: If you own other Ajax devices and want to help test and improve this integration, your contributions would be greatly appreciated! Together we can make this the best Ajax integration for Home Assistant.
 
@@ -39,7 +39,6 @@ Issues, pull requests, and feedback are welcome!
 
 ### 🔄 Real-Time Synchronization
 - **Instant bidirectional sync** - Changes in Ajax app appear immediately in Home Assistant and vice versa
-- **gRPC streaming** - Same technology as the official Ajax mobile app
 - **Sub-second updates** - State changes reflected in < 1 second
 
 ### 🛡️ Complete Security Control
@@ -62,7 +61,7 @@ Issues, pull requests, and feedback are welcome!
 - ✅ **Hub 2 Plus**
 - ✅ **MotionCam** - Motion detector with photo capture
 
-**Theoretically Supported** (via official API, not personally tested):
+**Theoretically Supported**
 - **Other Hubs** - Hub, Hub Plus, Hub 2, Hub 2 (4G)
 - **Motion Detectors** - MotionProtect, MotionProtect Plus, MotionProtect Outdoor, CombiProtect
 - **Door/Window Contacts** - DoorProtect, DoorProtect Plus
@@ -73,8 +72,6 @@ Issues, pull requests, and feedback are welcome!
 - **Keypads** - KeyPad, KeyPad Plus, KeyPad TouchScreen
 - **Smart Devices** - Socket, WallSwitch, Relay
 - **Other Devices** - SpaceControl (key fob), Button (panic button), Tag (keyring)
-
-**Note**: The integration uses Ajax's official API and is designed to work with all Ajax devices. If you have devices not listed as tested, they should still work - please report your experience!
 
 ### 📊 Rich Entity Support
 - **Alarm Control Panel** - Full security system control with support for groups/zones
@@ -135,12 +132,11 @@ The integration will automatically discover all your Ajax devices and create ent
 
 ### Credential Storage
 - **Local storage only**: Your email and password are stored in Home Assistant's encrypted config entry system (`.storage/core.config_entries`)
-- **Never leaves your network**: Credentials are only transmitted directly to Ajax's official API servers
 - **No third parties**: The integration does not communicate with any third-party servers
 
 ### Authentication Process
 1. **Password hashing**: Your password is hashed using SHA-256 before being sent to Ajax servers
-2. **Secure communication**: All API communication uses gRPC over HTTPS (encrypted TLS/SSL)
+2. **Secure communication**: All API communication uses HTTPS (encrypted TLS/SSL)
 3. **Session tokens**: After authentication, session tokens are stored locally in Home Assistant's secure storage
 4. **No logging**: Credentials are never logged or exposed in debug logs
 
@@ -272,9 +268,9 @@ All Ajax devices appear as appropriate Home Assistant entities:
 
 ### Update Interval
 
-The integration uses **real-time streaming** for instant updates (< 1 second), with a minimal backup polling every 60 seconds. The polling serves only as a safety fallback in case the streaming connection fails.
+The integration uses **real-time updates** for instant synchronization (< 1 second), with a minimal backup polling every 60 seconds. The polling serves only as a safety fallback.
 
-**⚠️ Important**: Do not reduce the polling interval below 60 seconds to avoid overloading Ajax's API servers. The streaming already handles all real-time updates.
+**⚠️ Important**: Do not reduce the polling interval below 60 seconds to avoid overloading Ajax's API servers.
 
 ```python
 UPDATE_INTERVAL = 60  # seconds
@@ -299,8 +295,8 @@ logger:
 3. Ensure you have an active internet connection
 
 ### Real-time updates not working
-1. Check that streaming tasks are started (see logs)
-2. Verify firewall allows gRPC connections (port 443)
+1. Check Home Assistant logs for errors
+2. Verify your internet connection is stable
 3. Restart the integration
 
 ### Devices not appearing
@@ -336,7 +332,7 @@ This integration is developed through a **collaborative approach** combining:
 - ✅ Open source and auditable
 - ✅ Subject to community scrutiny
 
-**Security note**: All security-critical code (authentication, encryption, credential handling) is carefully reviewed and follows Home Assistant best practices. The integration uses only official Ajax APIs and maintains the same security standards as the official Ajax mobile app.
+**Security note**: All security-critical code (authentication, encryption, credential handling) is carefully reviewed and follows Home Assistant best practices.
 
 We believe in **full transparency** about our development process. If you have concerns or questions, please open an issue!
 
@@ -346,9 +342,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ⚠️ Disclaimer
 
-This integration is **not officially affiliated** with Ajax Systems. It uses the official Ajax Cloud API but is an independent project.
-
-The integration accesses your Ajax account using your credentials. Your credentials are only used to authenticate with Ajax servers and are not stored or transmitted anywhere else.
+This integration is **not officially affiliated** with Ajax Systems.
 
 ## 💰 Support the Project
 
@@ -368,7 +362,7 @@ Your contributions help improve this project and add new features. Thank you! �
 
 # Version Française
 
-**Intégration complète** Home Assistant pour les systèmes de sécurité Ajax Systems via l'API Cloud officielle avec **synchronisation en temps réel**.
+**Intégration complète** Home Assistant pour les systèmes de sécurité Ajax Systems**.
 
 ## ⚠️ Statut du Projet & Communauté
 
@@ -386,7 +380,7 @@ Testé par les contributeurs:
 - ✅ **StreetSiren Jeweller**
 - ✅ **Superior MotionCam (PhOD) Jeweller**
 
-N'ayant pas encore accès à tous les appareils Ajax, **je ne peux pas tester tous les types d'appareils**. Cependant, l'intégration est construite sur l'API officielle Ajax et devrait théoriquement fonctionner avec tous les appareils Ajax.
+N'ayant pas encore accès à tous les appareils Ajax, **je ne peux pas tester tous les types d'appareils**.
 
 **🤝 Aide de la Communauté Nécessaire** : Si vous possédez d'autres appareils Ajax et souhaitez aider à tester et améliorer cette intégration, vos contributions seraient grandement appréciées ! Ensemble, nous pouvons faire de cette intégration la meilleure pour Home Assistant.
 
@@ -396,7 +390,6 @@ Les issues, pull requests et retours d'expérience sont les bienvenus !
 
 ### 🔄 Synchronisation Temps Réel
 - **Sync bidirectionnelle instantanée** - Les changements dans l'app Ajax apparaissent immédiatement dans Home Assistant et vice versa
-- **Streaming gRPC** - Même technologie que l'application mobile Ajax officielle
 - **Mises à jour sub-secondes** - Changements d'état reflétés en < 1 seconde
 
 ### 🛡️ Contrôle Complet de la Sécurité
@@ -419,7 +412,7 @@ Les issues, pull requests et retours d'expérience sont les bienvenus !
 - ✅ **Hub 2 Plus**
 - ✅ **MotionCam** - Détecteur de mouvement avec prise de photo
 
-**Théoriquement Supportés** (via l'API officielle, non testés personnellement) :
+**Théoriquement Supportés**
 - **Autres Hubs** - Hub, Hub Plus, Hub 2, Hub 2 (4G)
 - **Détecteurs de Mouvement** - MotionProtect, MotionProtect Plus, MotionProtect Outdoor, CombiProtect
 - **Contacts de Porte/Fenêtre** - DoorProtect, DoorProtect Plus
@@ -430,8 +423,6 @@ Les issues, pull requests et retours d'expérience sont les bienvenus !
 - **Claviers** - KeyPad, KeyPad Plus, KeyPad TouchScreen
 - **Appareils Intelligents** - Socket, WallSwitch, Relay
 - **Autres Appareils** - SpaceControl (télécommande), Button (bouton panique), Tag (badge)
-
-**Note** : L'intégration utilise l'API officielle Ajax et est conçue pour fonctionner avec tous les appareils Ajax. Si vous avez des appareils non listés comme testés, ils devraient quand même fonctionner - merci de partager votre expérience !
 
 ### 📊 Entités Riches
 - **Panneau de Contrôle d'Alarme** - Contrôle complet du système de sécurité avec support groupes/zones
@@ -492,12 +483,11 @@ L'intégration découvrira automatiquement tous vos appareils Ajax et créera de
 
 ### Stockage des Identifiants
 - **Stockage local uniquement** : Votre email et mot de passe sont stockés dans le système de config entry chiffré de Home Assistant (`.storage/core.config_entries`)
-- **Ne quitte jamais votre réseau** : Les identifiants sont uniquement transmis directement aux serveurs API officiels Ajax
 - **Aucun tiers** : L'intégration ne communique avec aucun serveur tiers
 
 ### Processus d'Authentification
 1. **Hachage du mot de passe** : Votre mot de passe est haché en SHA-256 avant d'être envoyé aux serveurs Ajax
-2. **Communication sécurisée** : Toute communication API utilise gRPC sur HTTPS (TLS/SSL chiffré)
+2. **Communication sécurisée** : Toute communication API utilise HTTPS (TLS/SSL chiffré)
 3. **Tokens de session** : Après authentification, les tokens de session sont stockés localement dans le stockage sécurisé de Home Assistant
 4. **Pas de journalisation** : Les identifiants ne sont jamais journalisés ou exposés dans les logs de débogage
 
@@ -629,9 +619,9 @@ Tous les appareils Ajax apparaissent comme entités Home Assistant appropriées 
 
 ### Intervalle de Mise à Jour
 
-L'intégration utilise le **streaming temps réel** pour des mises à jour instantanées (< 1 seconde), avec un polling de secours minimal toutes les 60 secondes. Le polling sert uniquement de solution de repli au cas où la connexion streaming serait interrompue.
+L'intégration utilise des **mises à jour en temps réel** pour une synchronisation instantanée (< 1 seconde), avec un polling de secours minimal toutes les 60 secondes. Le polling sert uniquement de solution de repli.
 
-**⚠️ Important** : Ne réduisez pas l'intervalle de polling en dessous de 60 secondes pour éviter de surcharger les serveurs API d'Ajax. Le streaming gère déjà toutes les mises à jour en temps réel.
+**⚠️ Important** : Ne réduisez pas l'intervalle de polling en dessous de 60 secondes pour éviter de surcharger les serveurs API d'Ajax.
 
 ```python
 UPDATE_INTERVAL = 60  # secondes
@@ -656,8 +646,8 @@ logger:
 3. Assurez-vous d'avoir une connexion internet active
 
 ### Les mises à jour temps réel ne fonctionnent pas
-1. Vérifiez que les tâches de streaming sont démarrées (voir les journaux)
-2. Vérifiez que le pare-feu autorise les connexions gRPC (port 443)
+1. Vérifiez les journaux Home Assistant pour les erreurs
+2. Vérifiez que votre connexion internet est stable
 3. Redémarrez l'intégration
 
 ### Les appareils n'apparaissent pas
@@ -693,7 +683,7 @@ Cette intégration est développée par une **approche collaborative** combinant
 - ✅ Open source et auditable
 - ✅ Soumise à l'examen de la communauté
 
-**Note de sécurité** : Tout le code critique pour la sécurité (authentification, chiffrement, gestion des identifiants) est soigneusement revu et suit les meilleures pratiques de Home Assistant. L'intégration utilise uniquement les API officielles Ajax et maintient les mêmes standards de sécurité que l'application mobile Ajax officielle.
+**Note de sécurité** : Tout le code critique pour la sécurité (authentification, chiffrement, gestion des identifiants) est soigneusement revu et suit les meilleures pratiques de Home Assistant.
 
 Nous croyons en la **transparence totale** concernant notre processus de développement. Si vous avez des préoccupations ou des questions, n'hésitez pas à ouvrir une issue !
 
@@ -703,9 +693,7 @@ Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de
 
 ## ⚠️ Avertissement
 
-Cette intégration n'est **pas officiellement affiliée** à Ajax Systems. Elle utilise l'API Cloud officielle Ajax mais est un projet indépendant.
-
-L'intégration accède à votre compte Ajax en utilisant vos identifiants. Vos identifiants sont uniquement utilisés pour s'authentifier auprès des serveurs Ajax et ne sont ni stockés ni transmis ailleurs.
+Cette intégration n'est **pas officiellement affiliée** à Ajax Systems.
 
 ## 💰 Soutenir le Projet
 
