@@ -14,6 +14,8 @@
 This integration is **actively developed** but I'm just getting started with Ajax security systems. I currently own and test with:
 - ✅ **Hub 2 Plus**
 - ✅ **MotionCam** (Motion detector with photo capture)
+- ✅ **DoorProtect** (Door/window contact sensor)
+- ✅ **GlassProtect** (Glass break detector)
 
 Users tested:
 - ✅ **Superior Hub Hybrid 4G**
