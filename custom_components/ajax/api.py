@@ -680,17 +680,7 @@ class AjaxApi:
                             status_data["door_opened"] = False
                             _LOGGER.debug("Door closed on device %s", update_data["device_id"])
 
-                    # Lid/Cover status (tamper detection)
-                    # Check if lid_opened field exists (it's a boolean, not optional)
-                    if hasattr(status, "lid_opened"):
-                        # Read the boolean value directly (can't use HasField on bool)
-                        if status.lid_opened:
-                            status_data["tampered"] = True
-                            _LOGGER.warning("Lid opened (tamper detected) on device %s", update_data["device_id"])
-                        else:
-                            # Lid is closed - no tamper
-                            status_data["tampered"] = False
-                            _LOGGER.debug("Lid closed (no tamper) on device %s", update_data["device_id"])
+                    # Tamper detection removed - was causing issues with buggy sensors
 
                     # Wire input status (EOL sensors)
                     if hasattr(status, "wire_input_status") and status.HasField("wire_input_status"):

@@ -181,7 +181,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 self._device_streaming_tasks[space_id] = task
                 _LOGGER.info("Started device status streaming for space %s", space_id)
 
-            # REMOVED: Device-specific stream for door sensor 30DD9A8B (buggy device, now ignored)
+            # Device-specific stream removed - was causing errors
 
     async def _async_stream_space(self, space_id: str) -> None:
         """Stream updates for a specific space in the background."""
@@ -1268,11 +1268,6 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             if not device_id:
                 continue
 
-            # TEMPORARY: Ignore buggy door sensor (device ID: 30DD9A8B)
-            if device_id == "30DD9A8B":
-                _LOGGER.debug("Ignoring buggy device 30DD9A8B (Capteur Porte d'entrée)")
-                continue
-
             # Parse device type
             raw_device_type = device_data.get("type", "unknown")
             device_type = self._parse_device_type(raw_device_type)
@@ -1810,19 +1805,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             elif "cleared" in event_type or "norm" in event_type:
                 device.attributes["leak_detected"] = False
 
-        elif "tamper" in event_type or "sabotage" in event_type:
-            # Tamper event
-            # NOTE: Ajax sends "tamper_opened" when the cover is CLOSED (tamper OK)
-            # This is counter-intuitive but confirmed by testing
-            if "opened" in event_type:
-                # Cover is closed/normal - tamper OK
-                device.attributes["tampered"] = False
-                _LOGGER.info("Device '%s': Tamper cleared (cover closed)", device.name)
-            elif "detected" in event_type or "triggered" in event_type or "détecté" in event_type or "closed" in event_type:
-                # Cover was opened - tamper detected
-                device.attributes["tampered"] = True
-                device.attributes["tampered_at"] = notification.timestamp.isoformat()
-                _LOGGER.warning("Device '%s': Tamper detected (cover opened)!", device.name)
+        # Tamper detection removed - was causing issues with buggy sensors
 
         elif "external_contact" in event_type or "external contact" in event_type:
             # External contact event (for EOL/wire_input sensors)
