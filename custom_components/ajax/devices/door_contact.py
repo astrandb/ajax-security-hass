@@ -134,18 +134,6 @@ class DoorContactHandler(AjaxDeviceHandler):
                 }
             )
 
-        # Malfunctions
-        if self.device.malfunctions:
-            sensors.append(
-                {
-                    "key": "malfunctions",
-                    "translation_key": "malfunctions",
-                    "icon": "mdi:alert-circle",
-                    "value_fn": lambda: ", ".join(self.device.malfunctions) if self.device.malfunctions else "None",
-                    "enabled_by_default": True,
-                }
-            )
-
         # Firmware version - enable by default and also add hardware version
         if self.device.firmware_version is not None:
             sensors.append(
