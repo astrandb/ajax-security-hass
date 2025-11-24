@@ -75,17 +75,6 @@ class DoorContactHandler(AjaxDeviceHandler):
             }
         )
 
-        # Problem detection
-        sensors.append(
-            {
-                "key": "problem",
-                "translation_key": "problem",
-                "device_class": BinarySensorDeviceClass.PROBLEM,
-                "value_fn": lambda: bool(self.device.malfunctions),
-                "enabled_by_default": True,
-            }
-        )
-
         return sensors
 
     def get_sensors(self) -> list[dict]:
