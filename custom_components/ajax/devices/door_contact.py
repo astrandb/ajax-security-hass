@@ -76,7 +76,7 @@ class DoorContactHandler(AjaxDeviceHandler):
             }
         )
 
-        # Tamper / Couvercle
+        # Tamper / Couvercle - inverted: False = closed (OK), True = open (problem)
         sensors.append(
             {
                 "key": "tamper",
@@ -119,33 +119,31 @@ class DoorContactHandler(AjaxDeviceHandler):
         """Return sensor entities for door contacts."""
         sensors = []
 
-        # Battery level
-        if self.device.battery_level is not None:
-            sensors.append(
-                {
-                    "key": "battery",
-                    "translation_key": "battery",
-                    "device_class": SensorDeviceClass.BATTERY,
-                    "native_unit_of_measurement": PERCENTAGE,
-                    "state_class": SensorStateClass.MEASUREMENT,
-                    "value_fn": lambda: self.device.battery_level,
-                    "enabled_by_default": True,
-                }
-            )
+        # Battery level - always create even if None, will be updated by notifications
+        sensors.append(
+            {
+                "key": "battery",
+                "translation_key": "battery",
+                "device_class": SensorDeviceClass.BATTERY,
+                "native_unit_of_measurement": PERCENTAGE,
+                "state_class": SensorStateClass.MEASUREMENT,
+                "value_fn": lambda: self.device.battery_level if self.device.battery_level is not None else None,
+                "enabled_by_default": True,
+            }
+        )
 
-        # Signal strength
-        if self.device.signal_strength is not None:
-            sensors.append(
-                {
-                    "key": "signal_strength",
-                    "translation_key": "signal_strength",
-                    "device_class": SensorDeviceClass.SIGNAL_STRENGTH,
-                    "native_unit_of_measurement": SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-                    "state_class": SensorStateClass.MEASUREMENT,
-                    "value_fn": lambda: self.device.signal_strength,
-                    "enabled_by_default": True,
-                }
-            )
+        # Signal strength - always create even if None, will be updated by notifications
+        sensors.append(
+            {
+                "key": "signal_strength",
+                "translation_key": "signal_strength",
+                "device_class": SensorDeviceClass.SIGNAL_STRENGTH,
+                "native_unit_of_measurement": SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+                "state_class": SensorStateClass.MEASUREMENT,
+                "value_fn": lambda: self.device.signal_strength if self.device.signal_strength is not None else None,
+                "enabled_by_default": True,
+            }
+        )
 
         # Temperature (DoorProtect Plus)
         if "temperature" in self.device.attributes:
