@@ -15,6 +15,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -154,6 +155,25 @@ class AjaxBinarySensor(CoordinatorEntity[AjaxDataCoordinator], BinarySensorEntit
 
         # Most sensors require device to be online
         return device.attributes.get("online", True)
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, update device info in registry."""
+        await super().async_added_to_hass()
+
+        # Update device info in registry to reflect current model, firmware, etc.
+        device = self._get_device()
+        if device and device.firmware_version:
+            device_registry = dr.async_get(self.hass)
+            device_entry = device_registry.async_get_device(
+                identifiers={(DOMAIN, self._device_id)}
+            )
+            if device_entry:
+                device_registry.async_update_device(
+                    device_entry.id,
+                    model=self._get_device_model_name(device.type.value),
+                    sw_version=device.firmware_version,
+                    hw_version=device.hardware_version,
+                )
 
     @callback
     def _handle_coordinator_update(self) -> None:

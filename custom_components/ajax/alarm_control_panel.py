@@ -11,6 +11,7 @@ from homeassistant.components.alarm_control_panel import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -139,6 +140,28 @@ class AjaxAlarmControlPanel(CoordinatorEntity[AjaxDataCoordinator], AlarmControl
         except Exception as err:
             _LOGGER.error("Failed to arm night mode: %s", err)
             raise
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, update device info in registry."""
+        await super().async_added_to_hass()
+
+        # Update hub device info in registry
+        space = self.coordinator.get_space(self._space_id)
+        if space and space.hub_details:
+            device_registry = dr.async_get(self.hass)
+            device_entry = device_registry.async_get_device(
+                identifiers={(DOMAIN, self._space_id)}
+            )
+            if device_entry:
+                firmware_version = None
+                if space.hub_details.get("firmware"):
+                    firmware_version = space.hub_details["firmware"].get("version")
+
+                device_registry.async_update_device(
+                    device_entry.id,
+                    model=space.hub_details.get("hubSubtype", "Security Hub"),
+                    sw_version=firmware_version,
+                )
 
     @callback
     def _handle_coordinator_update(self) -> None:
