@@ -228,11 +228,10 @@ class SQSManager:
                 self.coordinator.async_set_updated_data(self.coordinator.account)
 
                 # Create notification for arming event (respects user filter)
-                action_display = action.replace("_", " ").title()
+                action_display = self._format_arming_action(action)
                 message = f"🔐 {action_display}"
                 if user_name:
-                    message += f"\nBy: {user_name}"
-                message += f"\nTime: {event.get('event_time', '')}"
+                    message += f"\nPar: {user_name}"
 
                 notification = AjaxNotification(
                     id=event.get("event_id", ""),
@@ -426,6 +425,31 @@ class SQSManager:
             action,
             is_active,
         )
+
+    def _format_arming_action(self, action: str) -> str:
+        """Format arming action for display.
+
+        Args:
+            action: Raw action string like "NightModeOn", "Armed", "Disarmed"
+
+        Returns:
+            Human readable string
+        """
+        # Map common actions to readable text
+        action_map = {
+            "nightmodeon": "Mode nuit activé",
+            "nightmodeoff": "Mode nuit désactivé",
+            "armed": "Armé",
+            "disarmed": "Désarmé",
+            "arming": "Armement en cours",
+            "disarming": "Désarmement en cours",
+            "partiallyarmed": "Partiellement armé",
+            "arm": "Armé",
+            "disarm": "Désarmé",
+        }
+
+        action_lower = action.lower().replace("_", "").replace(" ", "")
+        return action_map.get(action_lower, action.replace("_", " ").title())
 
     @property
     def is_enabled(self) -> bool:
