@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -1116,6 +1117,34 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
         # Fire Home Assistant event for automations
         self._fire_security_state_event(space, old_state, new_state)
+
+        # Create persistent notification in HA
+        asyncio.create_task(self._create_sqs_notification(action, source_name, space.name))
+
+    async def _create_sqs_notification(self, action: str, source_name: str, space_name: str) -> None:
+        """Create a persistent notification in HA for SQS events."""
+        from homeassistant.components.persistent_notification import async_create
+
+        # Map action to French message
+        action_messages = {
+            "armed": "Armement",
+            "disarmed": "Désarmement",
+            "nightmodeon": "Mode nuit activé",
+            "partiallyarmed": "Armement partiel",
+        }
+
+        message = action_messages.get(action, action)
+        if source_name:
+            message = f"{message} par {source_name}"
+
+        title = f"Ajax - {space_name}"
+
+        async_create(
+            self.hass,
+            message,
+            title=title,
+            notification_id=f"ajax_{action}_{int(time.time())}",
+        )
 
     def _update_device_from_notification(self, space: AjaxSpace, notification: AjaxNotification) -> None:
         """Update device state based on notification event."""
