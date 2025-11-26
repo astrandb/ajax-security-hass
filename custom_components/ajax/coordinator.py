@@ -323,6 +323,13 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 sqs_client=sqs_client,
             )
 
+            # Set language from Home Assistant settings
+            ha_language = self.hass.config.language or "en"
+            # Map HA language codes to our supported languages
+            lang_map = {"fr": "fr", "es": "es", "en": "en"}
+            sqs_language = lang_map.get(ha_language[:2], "en")
+            self.sqs_manager.set_language(sqs_language)
+
             # Start receiving events
             success = await self.sqs_manager.start()
 
@@ -1016,8 +1023,8 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         action_map = {
             SecurityState.ARMED: "armed",
             SecurityState.DISARMED: "disarmed",
-            SecurityState.NIGHT_MODE: "nightmodeon",
-            SecurityState.PARTIALLY_ARMED: "partiallyarmed",
+            SecurityState.NIGHT_MODE: "night_mode",
+            SecurityState.PARTIALLY_ARMED: "partially_armed",
         }
 
         action = action_map.get(new_state, new_state.value.lower())
@@ -1060,8 +1067,8 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         action_map = {
             SecurityState.ARMED: "armed",
             SecurityState.DISARMED: "disarmed",
-            SecurityState.NIGHT_MODE: "nightmodeon",
-            SecurityState.PARTIALLY_ARMED: "partiallyarmed",
+            SecurityState.NIGHT_MODE: "night_mode",
+            SecurityState.PARTIALLY_ARMED: "partially_armed",
         }
 
         action = action_map.get(new_state, new_state.value.lower())
@@ -1126,6 +1133,9 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         is_arming_event = action in (
             "armed",
             "disarmed",
+            "night_mode",
+            "partially_armed",
+            # Legacy keys
             "nightmodeon",
             "partiallyarmed",
         )
@@ -1136,17 +1146,39 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
         # NOTIFICATION_FILTER_SECURITY_EVENTS and NOTIFICATION_FILTER_ALL show everything
 
-        # Map action to French message
-        action_messages = {
-            "armed": "Armement",
-            "disarmed": "Désarmement",
-            "nightmodeon": "Mode nuit activé",
-            "partiallyarmed": "Armement partiel",
+        # Map action to translated message using event_codes
+        from .event_codes import get_event_message
+
+        # Get language from Home Assistant
+        ha_language = self.hass.config.language or "en"
+        lang_map = {"fr": "fr", "es": "es", "en": "en"}
+        language = lang_map.get(ha_language[:2], "en")
+
+        # Map SecurityState values to action keys in event_codes
+        action_to_key = {
+            "armed": "armed",
+            "disarmed": "disarmed",
+            "night_mode": "night_mode",
+            "partially_armed": "partially_armed",
+            # Legacy keys for backwards compatibility
+            "nightmodeon": "night_mode",
+            "partiallyarmed": "partially_armed",
         }
 
-        message = action_messages.get(action, action)
+        action_key = action_to_key.get(action, action)
+        message = get_event_message(action_key, language)
+
+        _LOGGER.info(
+            "SQS notification: action=%s, action_key=%s, lang=%s, message=%s",
+            action,
+            action_key,
+            language,
+            message,
+        )
+
         if source_name:
-            message = f"{message} par {source_name}"
+            by_word = {"fr": "par", "en": "by", "es": "por"}.get(language, "by")
+            message = f"{message} {by_word} {source_name}"
 
         title = f"Ajax - {space_name}"
 

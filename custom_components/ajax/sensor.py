@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -99,9 +100,11 @@ def format_event_text(event: dict) -> str:
         "disarmed": "Désarmement",
         "nightmodeon": "Mode nuit activé",
         "nightmodeoff": "Mode nuit désactivé",
+        "night_mode": "Mode nuit activé",
         "night_mode_on": "Mode nuit activé",
         "night_mode_off": "Mode nuit désactivé",
         "partiallyarmed": "Armement partiel",
+        "partially_armed": "Armement partiel",
         # Alarms
         "motion_detected": "Mouvement détecté",
         "door_opened": "Porte ouverte",
@@ -125,12 +128,12 @@ def format_event_text(event: dict) -> str:
     message = action_messages.get(action_lower, action or event_type or "Événement")
 
     parts = [message]
-    if device_name:
-        parts.append(f"- {device_name}")
-    if room_name:
-        parts.append(f"({room_name})")
-    if user_name:
-        parts.append(f"par {user_name}")
+    if device_name and device_name.strip():
+        parts.append(f"- {device_name.strip()}")
+    if room_name and room_name.strip():
+        parts.append(f"({room_name.strip()})")
+    if user_name and user_name.strip():
+        parts.append(f"par {user_name.strip()}")
 
     return " ".join(parts)
 
@@ -140,6 +143,71 @@ def get_last_event_text(space) -> str:
     if not space.recent_events:
         return "Aucun événement"
     return format_event_text(space.recent_events[0])
+
+
+def get_last_event_attributes(space) -> dict[str, Any]:
+    """Get attributes for the last event sensor."""
+    if not space.recent_events:
+        return {"events_count": 0}
+
+    last_event = space.recent_events[0]
+    attrs = {
+        "event_type": last_event.get("event_type", ""),
+        "event_tag": last_event.get("event_tag", ""),
+        "action": last_event.get("action", ""),
+        "source_name": last_event.get("source_name", ""),
+        "source_type": last_event.get("source_type", ""),
+        "room_name": last_event.get("room_name", ""),
+        "transition": last_event.get("transition", ""),
+        "events_count": len(space.recent_events),
+    }
+
+    # Format timestamp
+    timestamp = last_event.get("timestamp")
+    if timestamp:
+        if isinstance(timestamp, datetime):
+            attrs["timestamp"] = timestamp.isoformat()
+            attrs["time_ago"] = _format_time_ago(timestamp)
+        else:
+            attrs["timestamp"] = str(timestamp)
+
+    # Add recent events history (last 5)
+    history = []
+    for event in space.recent_events[:5]:
+        entry = {
+            "message": event.get("message", ""),
+            "source": event.get("source_name", ""),
+            "room": event.get("room_name", ""),
+        }
+        ts = event.get("timestamp")
+        if ts and isinstance(ts, datetime):
+            entry["time"] = ts.strftime("%H:%M:%S")
+        history.append(entry)
+    attrs["recent_history"] = history
+
+    return attrs
+
+
+def _format_time_ago(timestamp: datetime) -> str:
+    """Format timestamp as 'X minutes ago' in French."""
+    now = datetime.now(timezone.utc)
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+
+    diff = now - timestamp
+    seconds = diff.total_seconds()
+
+    if seconds < 60:
+        return "À l'instant"
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f"Il y a {minutes} min"
+    elif seconds < 86400:
+        hours = int(seconds / 3600)
+        return f"Il y a {hours}h"
+    else:
+        days = int(seconds / 86400)
+        return f"Il y a {days}j"
 
 
 # ==============================================================================
@@ -196,7 +264,7 @@ SPACE_SENSORS: tuple[AjaxSpaceSensorDescription, ...] = (
     AjaxSpaceSensorDescription(
         key="recent_events",
         translation_key="recent_events",
-        icon="mdi:history",
+        icon="mdi:bell-ring",
         value_fn=lambda space: get_last_event_text(space),
     ),
     AjaxSpaceSensorDescription(
@@ -320,12 +388,13 @@ SPACE_SENSORS: tuple[AjaxSpaceSensorDescription, ...] = (
         should_create=lambda space: space.hub_details
         and space.hub_details.get("gradeMode"),
     ),
-    # Active Channels (WiFi, Ethernet, GSM)
+    # Active Channels (WiFi, Ethernet, GSM) - disabled by default (changes too often)
     AjaxSpaceSensorDescription(
         key="hub_active_channels",
         translation_key="hub_active_channels",
         icon="mdi:access-point-network",
         entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
         value_fn=lambda space: ", ".join(space.hub_details.get("activeChannels", []))
         if space.hub_details and space.hub_details.get("activeChannels")
         else None,
@@ -500,6 +569,18 @@ class AjaxSpaceSensor(CoordinatorEntity[AjaxDataCoordinator], SensorEntity):
         if not space or not self.entity_description.value_fn:
             return None
         return self.entity_description.value_fn(space)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes for recent_events sensor."""
+        if self.entity_description.key != "recent_events":
+            return None
+
+        space = self.coordinator.get_space(self._space_id)
+        if not space:
+            return None
+
+        return get_last_event_attributes(space)
 
     @callback
     def _handle_coordinator_update(self) -> None:
