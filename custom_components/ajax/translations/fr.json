@@ -33,7 +33,7 @@
       },
       "proxy_dev": {
         "title": "Mode en développement",
-        "description": "⚠️ **Ce mode est en cours de développement.**\n\nLe mode Proxy Hybride n'est pas encore disponible. Veuillez utiliser le mode Direct ou Proxy Sécurisé.\n\nCliquez sur Soumettre pour revenir à la sélection du mode."
+        "description": "⚠️ **Ce mode est en cours de développement.**\n\nLe mode Proxy Hybride n'est pas encore disponible. Veuillez utiliser le mode Direct ou Proxy Sécurisé.\n\nCliquez sur Valider pour revenir à la sélection du mode."
       },
       "proxy": {
         "title": "Connexion via proxy",
