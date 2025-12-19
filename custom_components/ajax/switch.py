@@ -259,16 +259,9 @@ class AjaxSwitch(CoordinatorEntity[AjaxDataCoordinator], SwitchEntity):
         if not device:
             return {}
 
-        # Get room name if available
-        room_name = None
-        if device.room_id:
-            space = self.coordinator.get_space(self._space_id)
-            if space and device.room_id in space.rooms:
-                room_name = space.rooms[device.room_id].name
-
         # Include room name in device name if available
         device_display_name = (
-            f"{room_name} - {device.name}" if room_name else device.name
+            f"{device.room_name} - {device.name}" if device.room_name else device.name
         )
 
         return {

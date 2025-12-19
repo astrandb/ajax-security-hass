@@ -466,6 +466,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             try:
                 hub_details = await self.api.async_get_hub(hub_id)
                 # Get rooms for this hub
+                rooms_data: list[dict] = []
                 try:
                     rooms_data = await self.api.async_get_rooms(hub_id)
                     # Build room_id -> room_name mapping
@@ -492,6 +493,8 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 hub_name = f"Hub {hub_id}"
                 security_state = SecurityState.NONE
                 hub_details = {}
+                rooms_data = []
+                rooms_map = {}
 
             # Use hub_id as space_id since we're mapping 1:1
             space_id = hub_id
@@ -525,6 +528,18 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
             # Store rooms mapping in space for device room name lookup
             space._rooms_map = rooms_map  # type: ignore
+
+            # Populate space.rooms with AjaxRoom objects
+            for room_data in rooms_data:
+                room_id = room_data.get("id")
+                if room_id:
+                    space.rooms[room_id] = AjaxRoom(
+                        id=room_id,
+                        name=room_data.get("roomName", f"Room {room_id}"),
+                        space_id=space_id,
+                        image_id=room_data.get("imageId"),
+                        image_url=room_data.get("imageUrl"),
+                    )
 
             # Fetch users for this hub
             try:

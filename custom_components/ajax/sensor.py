@@ -700,14 +700,8 @@ class AjaxDeviceSensor(CoordinatorEntity[AjaxDataCoordinator], SensorEntity):
         if not device:
             return {}
 
-        room_name = None
-        if device.room_id:
-            space = self.coordinator.get_space(self._space_id)
-            if space and device.room_id in space.rooms:
-                room_name = space.rooms[device.room_id].name
-
         device_display_name = (
-            f"{room_name} - {device.name}" if room_name else device.name
+            f"{device.room_name} - {device.name}" if device.room_name else device.name
         )
 
         return {
