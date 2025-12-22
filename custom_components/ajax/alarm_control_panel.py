@@ -49,13 +49,20 @@ async def async_setup_entry(
 class AjaxAlarmControlPanel(
     CoordinatorEntity[AjaxDataCoordinator], AlarmControlPanelEntity
 ):
-    """Representation of an Ajax alarm control panel (one per space/hub)."""
+    """Representation of an Ajax alarm control panel (one per space/hub).
+
+    Note: This entity overrides the default availability behavior to always
+    remain available, even during temporary API failures. This prevents
+    automations from being triggered incorrectly when the entity transitions
+    from "unavailable" back to its normal state.
+    """
 
     _attr_supported_features = (
         AlarmControlPanelEntityFeature.ARM_AWAY
         | AlarmControlPanelEntityFeature.ARM_NIGHT
     )
     _attr_code_arm_required = False
+    _attr_available = True  # Always available - keep last known state on API errors
 
     def __init__(
         self, coordinator: AjaxDataCoordinator, entry: ConfigEntry, space_id: str
