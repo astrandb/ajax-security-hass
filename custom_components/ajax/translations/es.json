@@ -731,6 +731,11 @@
         "name": "Botón de pánico"
       }
     },
+    "device_tracker": {
+      "position": {
+        "name": "Posición"
+      }
+    },
     "switch": {
       "always_active": {
         "name": "Siempre activo",

@@ -109,11 +109,9 @@ class AjaxSwitch(CoordinatorEntity[AjaxDataCoordinator], SwitchEntity):
         # Set unique ID
         self._attr_unique_id = f"{device_id}_{switch_key}"
 
-        # Set name
-        self._attr_name = switch_desc.get("name", switch_key.replace("_", " ").title())
-
-        # Set translation key
+        # Set translation key (don't set _attr_name, let HA use translation)
         self._attr_translation_key = switch_desc.get("translation_key", switch_key)
+        self._attr_has_entity_name = True
 
         # Set icon if provided
         if "icon" in switch_desc:

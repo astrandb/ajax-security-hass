@@ -702,6 +702,11 @@
         "name": "Panic Button"
       }
     },
+    "device_tracker": {
+      "position": {
+        "name": "Position"
+      }
+    },
     "switch": {
       "always_active": {
         "name": "Always active",

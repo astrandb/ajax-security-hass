@@ -53,12 +53,9 @@ class AjaxPanicButton(CoordinatorEntity[AjaxDataCoordinator], ButtonEntity):
         self._entry = entry
         self._space_id = space_id
 
-        # Get initial space data
-        space = coordinator.get_space(space_id)
-        space_name = space.name if space else "Unknown"
-
-        self._attr_name = f"Ajax Panic - {space_name}"
         self._attr_unique_id = f"{entry.entry_id}_panic_{space_id}"
+        self._attr_translation_key = "panic"
+        self._attr_has_entity_name = True
 
     async def async_press(self) -> None:
         """Handle the button press."""
