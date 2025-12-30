@@ -676,13 +676,36 @@
         "name": "Fotos por alarma"
       },
       "beep_volume_level": {
-        "name": "Volumen del pitido"
+        "name": "Volumen del pitido",
+        "state": {
+          "off": "Desactivado",
+          "quiet": "Silencioso",
+          "normal": "Normal",
+          "loud": "Fuerte",
+          "very_loud": "Muy fuerte"
+        }
       },
       "alarm_volume_level": {
-        "name": "Volumen de la alarma"
+        "name": "Volumen de la alarma",
+        "state": {
+          "off": "Desactivado",
+          "quiet": "Silencioso",
+          "normal": "Normal",
+          "loud": "Fuerte",
+          "very_loud": "Muy fuerte"
+        }
       },
       "alarm_duration": {
-        "name": "Duración de la alarma"
+        "name": "Duración de la alarma",
+        "state": {
+          "1_minute": "1 minuto",
+          "2_minutes": "2 minutos",
+          "3_minutes": "3 minutos",
+          "5_minutes": "5 minutos",
+          "10_minutes": "10 minutos",
+          "15_minutes": "15 minutos",
+          "continuous": "Continuo"
+        }
       },
       "led_indication": {
         "name": "Indicación LED"

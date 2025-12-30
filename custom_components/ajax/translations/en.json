@@ -496,13 +496,36 @@
         }
       },
       "beep_volume_level": {
-        "name": "Beep Volume"
+        "name": "Beep Volume",
+        "state": {
+          "off": "Off",
+          "quiet": "Quiet",
+          "normal": "Normal",
+          "loud": "Loud",
+          "very_loud": "Very loud"
+        }
       },
       "alarm_volume_level": {
-        "name": "Alarm Volume"
+        "name": "Alarm Volume",
+        "state": {
+          "off": "Off",
+          "quiet": "Quiet",
+          "normal": "Normal",
+          "loud": "Loud",
+          "very_loud": "Very loud"
+        }
       },
       "alarm_duration": {
-        "name": "Alarm Duration"
+        "name": "Alarm Duration",
+        "state": {
+          "1_minute": "1 minute",
+          "2_minutes": "2 minutes",
+          "3_minutes": "3 minutes",
+          "5_minutes": "5 minutes",
+          "10_minutes": "10 minutes",
+          "15_minutes": "15 minutes",
+          "continuous": "Continuous"
+        }
       },
       "hub_grade_mode": {
         "name": "Security grade"

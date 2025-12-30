@@ -139,39 +139,24 @@ class SirenHandler(AjaxDeviceHandler):
         return sensors
 
     def _format_volume(self, volume: str | None) -> str | None:
-        """Format volume level to French."""
+        """Format volume level to translation key."""
         if volume is None:
             return None
-        volume_map = {
-            "OFF": "Désactivé",
-            "QUIET": "Silencieux",
-            "NORMAL": "Normal",
-            "LOUD": "Fort",
-            "VERY_LOUD": "Très fort",
-        }
-        return volume_map.get(volume, volume)
+        # Return lowercase keys for translation
+        return volume.lower() if volume else None
 
     def _format_duration(self, duration: int | str | None) -> str | None:
-        """Format alarm duration to French."""
+        """Format alarm duration to translation key."""
         if duration is None:
             return None
-        # If it's a number (seconds), convert to minutes
+        # If it's a number (seconds), convert to key format
         if isinstance(duration, (int, float)):
             minutes = int(duration) // 60
             if minutes == 0:
-                return f"{int(duration)} secondes"
-            return f"{minutes} minutes"
-        # If it's a string like "3_MINUTES", "180_SECONDS", etc.
-        duration_map = {
-            "1_MINUTE": "1 minute",
-            "2_MINUTES": "2 minutes",
-            "3_MINUTES": "3 minutes",
-            "5_MINUTES": "5 minutes",
-            "10_MINUTES": "10 minutes",
-            "15_MINUTES": "15 minutes",
-            "CONTINUOUS": "Continue",
-        }
-        return duration_map.get(str(duration), str(duration))
+                return f"{int(duration)}_seconds"
+            return f"{minutes}_minutes"
+        # Return lowercase key for translation
+        return str(duration).lower() if duration else None
 
     def get_switches(self) -> list[dict]:
         """Return switch entities for sirens."""
