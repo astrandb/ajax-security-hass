@@ -937,6 +937,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                         "EXCELLENT": 100,
                         "STRONG": 85,
                         "GOOD": 70,
+                        "NORMAL": 60,
                         "MEDIUM": 50,
                         "WEAK": 30,
                         "POOR": 15,
