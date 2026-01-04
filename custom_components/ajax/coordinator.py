@@ -354,10 +354,13 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 self._initial_load_done = True
                 _LOGGER.info("Initial data load complete")
 
-                # Start door sensor polling if any space is disarmed
+                # Start door sensor polling if any space is disarmed or in night mode
                 for space in self.account.spaces.values():
-                    if space.security_state == SecurityState.DISARMED:
-                        self._manage_door_sensor_polling(True)
+                    if space.security_state in (
+                        SecurityState.DISARMED,
+                        SecurityState.NIGHT_MODE,
+                    ):
+                        self._manage_door_sensor_polling(True, space.security_state)
                         break
 
                 # Initialize real-time events in background
