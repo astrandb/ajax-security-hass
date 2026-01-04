@@ -62,7 +62,7 @@ Issues, pull requests, and feedback are welcome!
 - **Multiple connection modes**:
   - **Direct mode** - Direct API connection with optional AWS SQS for real-time events
   - **Proxy mode** - Connection via proxy server with SSE (Server-Sent Events) for real-time events
-- **Polling fallback** - 30-second polling for sensor states when disarmed (motion/door events not sent by Ajax API when disarmed)
+- **Polling fallback** - 30-second polling for all sensor states, plus 5-second fast polling for door sensors when disarmed or in night mode (for excluded sensors)
 
 ### 🛡️ Complete Security Control
 - ✅ **Arm** (Away mode)
@@ -177,8 +177,8 @@ Due to Ajax Systems architecture, **motion and door/window events are only sent 
 
 When the system is **disarmed** and sensors are not in "Always Active" mode:
 - Motion and door events are **not** sent to SQS/SSE
-- The integration falls back to polling (30 seconds)
-- State changes are still detected, but with a delay
+- The integration uses fast polling (5 seconds) for door sensors
+- Motion sensors fall back to standard polling (30 seconds)
 
 > 💡 **Tip**: Enable "Always Active" on motion sensors if you need real-time motion detection while disarmed (e.g., for automation). Note: This will use more battery and may trigger alarms if not configured properly (set siren to "sound only when armed").
 

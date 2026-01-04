@@ -150,9 +150,8 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
     def _update_polling_interval(self, security_state: SecurityState) -> None:
         """Update polling interval based on security state.
 
-        When armed or in night mode, poll faster (10s) to detect door sensor
-        changes quickly. When disarmed, poll slower (30s) to reduce API calls.
-        Also manages door sensor fast polling (only when disarmed).
+        Polling is 30s in all modes (Ajax API minimum). Also manages door sensor
+        fast polling (5s) when disarmed or in night mode for excluded sensors.
 
         Args:
             security_state: Current security state of the space
@@ -1502,65 +1501,6 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
 
         # Fire Home Assistant event for automations
         self._fire_security_state_event(space, old_state, new_state)
-
-    def _create_event_from_sqs(
-        self,
-        space: AjaxSpace,
-        old_state: SecurityState,
-        new_state: SecurityState,
-        source_name: str = "",
-    ) -> None:
-        """Create an event from SQS data (includes user who triggered).
-
-        Args:
-            space: The AjaxSpace object
-            old_state: Previous security state
-            new_state: New security state
-            source_name: Name of user/device who triggered the action
-        """
-        action_map = {
-            SecurityState.ARMED: "armed",
-            SecurityState.DISARMED: "disarmed",
-            SecurityState.NIGHT_MODE: "night_mode",
-            SecurityState.PARTIALLY_ARMED: "partially_armed",
-        }
-
-        action = action_map.get(new_state, new_state.value.lower())
-
-        # Create event with source info from SQS
-        event = {
-            "action": action,
-            "hub_id": space.hub_id or space.id,
-            "space_id": space.id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "event_time": datetime.now(timezone.utc),
-        }
-
-        # Add source/user info if available
-        if source_name:
-            event["source_name"] = source_name
-
-        # Store in recent_events (keep last 10)
-        space.recent_events.insert(0, event)
-        space.recent_events = space.recent_events[:10]
-
-        _LOGGER.debug(
-            "Event stored: %s by %s (total: %d)",
-            action,
-            source_name or "?",
-            len(space.recent_events),
-        )
-
-        # Update polling interval based on new state
-        self._update_polling_interval(new_state)
-
-        # Fire Home Assistant event for automations
-        self._fire_security_state_event(space, old_state, new_state)
-
-        # Create persistent notification in HA
-        asyncio.create_task(
-            self._create_sqs_notification(action, source_name, space.name)
-        )
 
     async def _create_sqs_notification(
         self, action: str, source_name: str, space_name: str
