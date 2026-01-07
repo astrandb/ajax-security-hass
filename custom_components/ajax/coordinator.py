@@ -1705,13 +1705,19 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             "speakerphone": DeviceType.SPEAKERPHONE,
             # Transmitter
             "transmitter": DeviceType.TRANSMITTER,
+            "transmitterfibra": DeviceType.TRANSMITTER,
+            "transmitter_fibra": DeviceType.TRANSMITTER,
             "integration": DeviceType.TRANSMITTER,
             # MultiTransmitter (wired sensors hub)
             "multitransmitter": DeviceType.MULTI_TRANSMITTER,
             "multi_transmitter": DeviceType.MULTI_TRANSMITTER,
+            "multitransmitterfibra": DeviceType.MULTI_TRANSMITTER,
+            "multitransmitter_fibra": DeviceType.MULTI_TRANSMITTER,
             # MultiTransmitter wired inputs (treat as door contacts)
             "multitransmitterwireinput": DeviceType.WIRE_INPUT,
             "multitransmitter_wire_input": DeviceType.WIRE_INPUT,
+            "multitransmitterfibrawireinput": DeviceType.WIRE_INPUT,
+            "multitransmitter_fibra_wire_input": DeviceType.WIRE_INPUT,
             # Repeater / Range Extender
             "repeater": DeviceType.REPEATER,
             "rex": DeviceType.REPEATER,
