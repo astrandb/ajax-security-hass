@@ -707,7 +707,7 @@ class AjaxRestApi:
     ) -> None:
         """Set multi-gang switch channel state.
 
-        Uses channel-specific commands for LightSwitchTwoGang and similar devices.
+        Uses SWITCH_ON/SWITCH_OFF with channel parameter for LightSwitchTwoGang.
 
         Args:
             hub_id: Hub ID
@@ -716,10 +716,22 @@ class AjaxRestApi:
             state: True for on, False for off
             device_type: Device type string (e.g., "LightSwitchTwoGang")
         """
-        # Channel-specific commands: CHANNEL_1_ON, CHANNEL_1_OFF, CHANNEL_2_ON, CHANNEL_2_OFF
-        action = "ON" if state else "OFF"
-        command = f"CHANNEL_{channel}_{action}"
-        await self.async_send_device_command(hub_id, device_id, command, device_type)
+        if not self.user_id:
+            raise AjaxRestApiError("No user_id available. Call async_login() first.")
+
+        endpoint = f"user/{self.user_id}/hubs/{hub_id}/devices/{device_id}/command"
+        command = "SWITCH_ON" if state else "SWITCH_OFF"
+        payload = {
+            "command": command,
+            "deviceType": device_type,
+            "channel": channel,
+        }
+        _LOGGER.info(
+            "Sending channel command: POST %s with %s",
+            endpoint,
+            payload,
+        )
+        await self._request_no_response("POST", endpoint, payload)
 
     # Socket methods
     async def async_get_socket_power(self, device_id: str) -> dict[str, Any]:
