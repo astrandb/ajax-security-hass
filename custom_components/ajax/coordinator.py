@@ -982,11 +982,14 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
             # These don't change often and SQS sends MALFUNCTION events for low battery
             if need_details_refresh or is_new_device:
                 # Battery level: try multiple field names
+                # Round to int to avoid jitter on last decimal
                 battery = device_data.get("batteryChargeLevelPercentage")
                 if battery is None:
                     battery = device_data.get("batteryPercents")
                 if battery is None:
                     battery = device_data.get("battery_level")
+                if battery is not None:
+                    battery = round(battery)
                 device.battery_level = battery
                 device.battery_state = device_data.get(
                     "batteryState", device_data.get("battery_state")
@@ -1006,6 +1009,9 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                         "POOR": 15,
                     }
                     device.signal_strength = signal_map.get(signal_level.upper(), None)
+                elif signal_level is not None:
+                    # Round to int to avoid jitter on last decimal
+                    device.signal_strength = round(signal_level)
                 else:
                     device.signal_strength = signal_level
 
@@ -1022,8 +1028,12 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
                 device.attributes["tampered"] = device_data.get("tampered", False)
 
             # Store temperature if available (DoorProtect Plus)
+            # Round to 1 decimal to avoid jitter on last decimal
             if "temperature" in device_data:
-                device.attributes["temperature"] = device_data.get("temperature")
+                temp = device_data.get("temperature")
+                if temp is not None:
+                    temp = round(temp, 1)
+                device.attributes["temperature"] = temp
 
             # Store other useful attributes
             # For MultiTransmitterWireInput, settings are in wiredDeviceSettings
