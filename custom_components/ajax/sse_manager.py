@@ -61,6 +61,8 @@ class SSEManager:
         self.sse_client = sse_client
         self._language = DEFAULT_LANGUAGE
         self._last_state_update: dict[str, float] = {}  # hub_id -> timestamp
+        self._recent_events: dict[str, float] = {}  # event_key -> timestamp
+        self._dedup_window = 5  # seconds to ignore duplicate events
 
     def set_language(self, language: str) -> None:
         """Set language for event messages."""
@@ -194,6 +196,24 @@ class SSEManager:
                 source_id,
                 transition,
             )
+
+            # Deduplication: ignore duplicate events within window
+            event_key = f"{source_id}:{event_tag}:{transition}"
+            now = time.time()
+            last_time = self._recent_events.get(event_key, 0)
+            if now - last_time < self._dedup_window:
+                _LOGGER.debug(
+                    "SSE event ignored (duplicate): %s, last seen %.1fs ago",
+                    event_key,
+                    now - last_time,
+                )
+                return
+            self._recent_events[event_key] = now
+
+            # Cleanup old entries (keep dict from growing indefinitely)
+            self._recent_events = {
+                k: v for k, v in self._recent_events.items() if now - v < 60
+            }
 
             # Get space by hub_id
             space = None
