@@ -4,11 +4,6 @@ All notable changes to this project will be documented in this file.
 
 ## [0.7.45] - 2025-01-10
 
-### Changed
-- Release workflow now includes changelog in release notes
-
-## [0.7.44] - 2025-01-10
-
 ### Fixed
 - Round sensor values to avoid jitter on last decimal (#29)
 
