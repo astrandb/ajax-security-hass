@@ -28,7 +28,9 @@ class VideoEdgeHandler:
 
         # For each channel, we can have AI detection sensors
         for i, channel in enumerate(self.video_edge.channels):
-            channel_id = channel.get("id", str(i))
+            channel_id = (
+                channel.get("id", str(i)) if isinstance(channel, dict) else str(i)
+            )
             channel_name = (
                 f"Channel {i + 1}" if len(self.video_edge.channels) > 1 else ""
             )
@@ -39,8 +41,8 @@ class VideoEdgeHandler:
                     "key": f"motion_{channel_id}" if channel_name else "motion",
                     "translation_key": "video_motion",
                     "icon": "mdi:motion-sensor",
-                    "value_fn": lambda ch=channel: self._has_detection(
-                        ch, "VIDEO_MOTION"
+                    "value_fn": lambda cid=channel_id: self._has_detection_by_id(
+                        cid, "VIDEO_MOTION"
                     ),
                     "enabled_by_default": True,
                     "channel_id": channel_id,
@@ -53,8 +55,8 @@ class VideoEdgeHandler:
                     "key": f"human_{channel_id}" if channel_name else "human",
                     "translation_key": "video_human",
                     "icon": "mdi:human",
-                    "value_fn": lambda ch=channel: self._has_detection(
-                        ch, "VIDEO_HUMAN"
+                    "value_fn": lambda cid=channel_id: self._has_detection_by_id(
+                        cid, "VIDEO_HUMAN"
                     ),
                     "enabled_by_default": True,
                     "channel_id": channel_id,
@@ -67,8 +69,8 @@ class VideoEdgeHandler:
                     "key": f"vehicle_{channel_id}" if channel_name else "vehicle",
                     "translation_key": "video_vehicle",
                     "icon": "mdi:car",
-                    "value_fn": lambda ch=channel: self._has_detection(
-                        ch, "VIDEO_VEHICLE"
+                    "value_fn": lambda cid=channel_id: self._has_detection_by_id(
+                        cid, "VIDEO_VEHICLE"
                     ),
                     "enabled_by_default": True,
                     "channel_id": channel_id,
@@ -81,7 +83,9 @@ class VideoEdgeHandler:
                     "key": f"pet_{channel_id}" if channel_name else "pet",
                     "translation_key": "video_pet",
                     "icon": "mdi:dog",
-                    "value_fn": lambda ch=channel: self._has_detection(ch, "VIDEO_PET"),
+                    "value_fn": lambda cid=channel_id: self._has_detection_by_id(
+                        cid, "VIDEO_PET"
+                    ),
                     "enabled_by_default": True,
                     "channel_id": channel_id,
                 }
@@ -121,10 +125,32 @@ class VideoEdgeHandler:
 
         return sensors
 
+    def _get_channel_by_id(self, channel_id: str) -> dict | None:
+        """Get channel dict by ID from current video_edge.channels."""
+        for i, channel in enumerate(self.video_edge.channels):
+            if isinstance(channel, dict):
+                if channel.get("id") == channel_id:
+                    return channel
+            elif str(i) == channel_id:
+                # Fallback for index-based ID
+                return channel if isinstance(channel, dict) else None
+        return None
+
+    def _has_detection_by_id(self, channel_id: str, detection_type: str) -> bool:
+        """Check if channel has a specific detection active by channel ID."""
+        channel = self._get_channel_by_id(channel_id)
+        if not channel:
+            return False
+        return self._has_detection(channel, detection_type)
+
     def _has_detection(self, channel: dict, detection_type: str) -> bool:
         """Check if channel has a specific detection active."""
+        if not isinstance(channel, dict):
+            return False
         states = channel.get("state", [])
+        if not isinstance(states, list):
+            return False
         for state in states:
-            if state.get("type") == detection_type:
+            if isinstance(state, dict) and state.get("type") == detection_type:
                 return state.get("active", False)
         return False
