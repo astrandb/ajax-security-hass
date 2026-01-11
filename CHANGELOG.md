@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.51] - 2026-01-11
+
+### Fixed
+- SSE manager now properly awaits metadata refresh for group events (#32)
+
 ## [0.7.50] - 2026-01-11
 
 ### Fixed
