@@ -46,6 +46,8 @@ EVENT_TAG_TO_STATE = {
     "nightmodeonwithmalfunctions": SecurityState.NIGHT_MODE,
     "nightmodeoff": SecurityState.DISARMED,
     "partialarm": SecurityState.PARTIALLY_ARMED,
+    "grouparm": SecurityState.PARTIALLY_ARMED,
+    "groupdisarm": SecurityState.PARTIALLY_ARMED,  # Triggers refresh to get actual state
 }
 
 # Event tags by category (eventTag -> (action_key, is_triggered))
@@ -440,9 +442,20 @@ class SQSManager:
             ha_action_pending,
         )
 
+        # Group arm/disarm events need a refresh to get the actual state
+        # because the final state depends on how many groups are armed
+        is_group_event = event_tag in ("grouparm", "groupdisarm")
+        if is_group_event:
+            _LOGGER.debug(
+                "SQS: Group event %s detected, scheduling refresh for actual state",
+                event_tag,
+            )
+            # Schedule refresh to get actual hub state
+            await self.coordinator.async_request_refresh()
+
         # Skip state update if HA action is pending (protect optimistic update)
         # But still record the event in history and create notification
-        if state_changed and not ha_action_pending:
+        if state_changed and not ha_action_pending and not is_group_event:
             space.security_state = new_state
             self._last_state_update[space.hub_id] = time.time()
             # Update polling interval based on new state

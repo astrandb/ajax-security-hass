@@ -289,7 +289,18 @@ class SSEManager:
         if self.coordinator.get_pending_ha_action(space.hub_id):
             source_name = "Home Assistant"
 
-        if state_changed:
+        # Group arm/disarm events need a refresh to get the actual state
+        is_group_event = event_tag in ("grouparm", "groupdisarm")
+        if is_group_event:
+            _LOGGER.debug(
+                "SSE: Group event %s detected, scheduling refresh for actual state",
+                event_tag,
+            )
+            import asyncio
+
+            asyncio.create_task(self.coordinator.async_request_refresh())
+
+        if state_changed and not is_group_event:
             space.security_state = new_state
             self._last_state_update[space.hub_id] = time.time()
 
