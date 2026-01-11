@@ -407,6 +407,13 @@
       },
       "hub_gsm": {
         "name": "Hub GSM / SIM",
+        "state": {
+          "strong": "Strong",
+          "good": "Good",
+          "normal": "Normal",
+          "weak": "Weak",
+          "none": "None"
+        },
         "state_attributes": {
           "network_status": {
             "name": "Network status"
