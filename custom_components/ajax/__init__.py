@@ -31,6 +31,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import AjaxDataCoordinator
+from .models import SecurityState
 
 if TYPE_CHECKING:
     from homeassistant.helpers.typing import ConfigType
@@ -177,7 +178,53 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create HA Areas from Ajax rooms and assign devices
     await _async_setup_areas(hass, coordinator)
 
+    # Listen for options updates (takes effect immediately without reboot)
+    entry.async_on_unload(entry.add_update_listener(_async_update_options))
+
     return True
+
+
+async def _async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle options update."""
+    coordinator: AjaxDataCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    # Update door sensor fast polling option
+    door_sensor_fast_poll = entry.options.get(CONF_DOOR_SENSOR_FAST_POLL, False)
+    old_value = coordinator._door_sensor_fast_poll_enabled
+    coordinator._door_sensor_fast_poll_enabled = door_sensor_fast_poll
+
+    if old_value != door_sensor_fast_poll:
+        _LOGGER.info(
+            "Door sensor fast polling %s (task running: %s)",
+            "enabled" if door_sensor_fast_poll else "disabled",
+            coordinator._door_sensor_poll_task is not None,
+        )
+        # Apply immediately: stop polling if disabled, or trigger refresh to restart
+        if not door_sensor_fast_poll:
+            # Stop any running door sensor polling
+            _LOGGER.debug("Stopping door sensor polling task")
+            coordinator._manage_door_sensor_polling(
+                False, coordinator._door_sensor_poll_security_state
+            )
+        else:
+            # Re-evaluate polling based on current security state
+            if coordinator.account:
+                for space in coordinator.account.spaces.values():
+                    is_disarmed_or_night = space.security_state in (
+                        SecurityState.DISARMED,
+                        SecurityState.NIGHT_MODE,
+                    )
+                    _LOGGER.debug(
+                        "Re-evaluating polling for space %s (state: %s, should_poll: %s)",
+                        space.name,
+                        space.security_state.value,
+                        is_disarmed_or_night,
+                    )
+                    if is_disarmed_or_night:
+                        coordinator._manage_door_sensor_polling(
+                            True, space.security_state
+                        )
+                        break  # Only need one polling task
 
 
 async def _async_setup_services(
