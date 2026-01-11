@@ -10,7 +10,10 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
@@ -133,6 +136,26 @@ async def async_setup_entry(
                     "Created video edge binary sensor '%s' for: %s",
                     sensor_desc["key"],
                     video_edge.name,
+                )
+
+        # Create hub-level binary sensors from hub_details
+        if space.hub_details:
+            hub_id = space.hub_id
+
+            # Hub tamper binary sensor
+            tamper_unique_id = f"{hub_id}_tamper"
+            if tamper_unique_id not in seen_unique_ids:
+                seen_unique_ids.add(tamper_unique_id)
+                entities.append(
+                    AjaxHubBinarySensor(
+                        coordinator=coordinator,
+                        space_id=space_id,
+                        sensor_key="tamper",
+                    )
+                )
+                _LOGGER.debug(
+                    "Created hub binary sensor 'tamper' for space: %s",
+                    space.name,
                 )
 
     async_add_entities(entities)
@@ -398,3 +421,74 @@ class AjaxVideoEdgeBinarySensor(
         if not space:
             return None
         return space.video_edges.get(self._video_edge_id)
+
+
+class AjaxHubBinarySensor(CoordinatorEntity[AjaxDataCoordinator], BinarySensorEntity):
+    """Representation of an Ajax Hub binary sensor.
+
+    This is for hub-level sensors that come from space.hub_details,
+    not from a device in space.devices.
+    """
+
+    _attr_has_entity_name = True
+
+    # Hub binary sensor definitions
+    HUB_BINARY_SENSORS = {
+        "tamper": {
+            "device_class": BinarySensorDeviceClass.TAMPER,
+            "value_key": "tampered",
+        },
+    }
+
+    def __init__(
+        self,
+        coordinator: AjaxDataCoordinator,
+        space_id: str,
+        sensor_key: str,
+    ) -> None:
+        """Initialize the Ajax hub binary sensor."""
+        super().__init__(coordinator)
+        self._space_id = space_id
+        self._sensor_key = sensor_key
+        self._sensor_config = self.HUB_BINARY_SENSORS.get(sensor_key, {})
+
+        # Get space for hub_id
+        space = coordinator.get_space(space_id)
+        hub_id = space.hub_id if space else space_id
+
+        # Set unique ID
+        self._attr_unique_id = f"{hub_id}_{sensor_key}"
+
+        # Set device class
+        if "device_class" in self._sensor_config:
+            self._attr_device_class = self._sensor_config["device_class"]
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the binary sensor is on."""
+        space = self.coordinator.get_space(self._space_id)
+        if not space or not space.hub_details:
+            return None
+
+        value_key = self._sensor_config.get("value_key")
+        if value_key:
+            return space.hub_details.get(value_key, False)
+        return None
+
+    @property
+    def available(self) -> bool:
+        """Return True if entity is available."""
+        space = self.coordinator.get_space(self._space_id)
+        return space is not None and space.hub_details is not None
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device information linking to the hub/space device."""
+        space = self.coordinator.get_space(self._space_id)
+        if not space:
+            return {}
+
+        # Link to the space device (hub)
+        return {
+            "identifiers": {(DOMAIN, self._space_id)},
+        }
