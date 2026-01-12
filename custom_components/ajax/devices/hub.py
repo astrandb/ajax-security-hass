@@ -202,7 +202,11 @@ class HubHandler(AjaxDeviceHandler):
                     "key": "gsm_type",
                     "translation_key": "gsm_type",
                     "icon": "mdi:signal-cellular-3",
-                    "value_fn": lambda: self.device.attributes.get("gsm_type"),
+                    "value_fn": lambda: (
+                        self.device.attributes.get("gsm_type", "").lower()
+                        if self.device.attributes.get("gsm_type")
+                        else None
+                    ),
                     "enabled_by_default": True,
                 }
             )
