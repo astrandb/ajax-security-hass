@@ -28,6 +28,12 @@
 
 ---
 
+> [!WARNING]
+> ## Real-Time Events Only When Armed
+> Due to Ajax Systems architecture, **real-time events (SSE/SQS) are only received when the system is armed**. When disarmed, the integration uses polling (30s for sensors, 5s for door sensors). This is an Ajax API limitation.
+
+---
+
 ## ⚠️ Project Status & Community
 
 This integration is **actively developed** but I'm just getting started with Ajax security systems. I currently own and test with:
