@@ -645,7 +645,7 @@ class AjaxDataCoordinator(DataUpdateCoordinator[AjaxAccount]):
         # Check if SSE is available
         if not SSE_AVAILABLE:
             _LOGGER.info(
-                "SSE not available (module not loaded). " "Using REST API polling only."
+                "SSE not available (module not loaded). Using REST API polling only."
             )
             self._sse_initialized = True
             return
