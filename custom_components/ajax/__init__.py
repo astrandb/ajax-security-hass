@@ -244,11 +244,6 @@ async def _async_setup_services(hass: HomeAssistant) -> None:
     async def _extract_config_entry(service_call: ServiceCall) -> list[ConfigEntry]:
         """Extract config entry from the service call."""
         target_entry_ids = await async_extract_config_entry_ids(service_call)
-        _LOGGER.error("target_entry_ids: %s", target_entry_ids)
-        _LOGGER.error(
-            "Loaded entries: %s",
-            service_call.hass.config_entries.async_loaded_entries(DOMAIN),
-        )
         target_entries: list[ConfigEntry] = [
             loaded_entry
             for loaded_entry in service_call.hass.config_entries.async_loaded_entries(
