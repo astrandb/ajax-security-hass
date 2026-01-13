@@ -137,6 +137,12 @@
       "battery_connected": {
         "name": "Hub batteri"
       },
+      "beep_on_arm": {
+        "name": "Pip vid till- och frånkoppling"
+      },
+      "beep_on_delay": {
+        "name": "Pip vid fördröjning"
+      },
       "connection": {
         "name": "Hub anslutning",
         "state": {
@@ -731,14 +737,14 @@
         }
       },
       "chimes": {
-        "name": "Chimes",
+        "name": "Dörrsignal",
         "state": {
           "off": "Från",
           "on": "Till"
         }
       },
       "chimes_enabled": {
-        "name": "Chime",
+        "name": "Dörrsignal",
         "state": {
           "off": "Från",
           "on": "Till"
