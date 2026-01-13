@@ -594,6 +594,9 @@
       "led_indication": {
         "name": "LED indication"
       },
+      "mac_address": {
+        "name": "MAC address"
+      },
       "malfunctions": {
         "name": "Malfunctions"
       },
