@@ -1013,6 +1013,18 @@ class AjaxRestApi:
         "malfunctions",
         "alerts",
         "problems",
+        # Device capability/support flags (read-only)
+        "capabilities",
+        "selfMonitoringConfigs",
+        "indicatorLightModeSupported",
+        "rollerShutterSupported",
+        # Hardware config fields (read-only)
+        "color",
+        "assignedExtender",
+        "cmsDeviceIndex",
+        "bypassState",
+        "deviceTransmissionPowerMode",
+        "deviceTransmissionPowerModeValue",
     }
 
     # Device settings methods
