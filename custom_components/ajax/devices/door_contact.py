@@ -28,13 +28,13 @@ class DoorContactHandler(AjaxDeviceHandler):
         """Return binary sensor entities for door contacts."""
         sensors = []
 
-        # Main door sensor - always create it even if attribute doesn't exist yet
+        # Main opening sensor - always create it even if attribute doesn't exist yet
         # The attribute will be populated by SQS notifications
-        # Note: No translation_key needed - HA provides automatic translation for DOOR device_class
+        # Note: No translation_key needed - HA provides automatic translation for OPENING device_class
         sensors.append(
             {
                 "key": "door",
-                "device_class": BinarySensorDeviceClass.DOOR,
+                "device_class": BinarySensorDeviceClass.OPENING,
                 "value_fn": lambda: self.device.attributes.get("door_opened", False),
                 "enabled_by_default": True,
                 "name": None,
@@ -48,7 +48,7 @@ class DoorContactHandler(AjaxDeviceHandler):
                 {
                     "key": "external_contact",
                     "translation_key": "external_contact",
-                    "device_class": BinarySensorDeviceClass.DOOR,
+                    "device_class": BinarySensorDeviceClass.OPENING,
                     "value_fn": lambda: self.device.attributes.get(
                         "external_contact_opened", False
                     ),
@@ -357,7 +357,7 @@ class WireInputHandler(DoorContactHandler):
         sensors = [
             {
                 "key": "door",
-                "device_class": BinarySensorDeviceClass.DOOR,
+                "device_class": BinarySensorDeviceClass.OPENING,
                 "value_fn": lambda: self.device.attributes.get("door_opened", False),
                 "enabled_by_default": True,
             }
