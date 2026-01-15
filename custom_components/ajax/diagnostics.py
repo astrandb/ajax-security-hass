@@ -6,9 +6,12 @@ import logging
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
+
+from . import AjaxConfigEntry
+from .const import DOMAIN
+import contextlib
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +26,7 @@ TO_REDACT = {
 
 
 async def get_ajax_raw_data(
-    hass: HomeAssistant, entry: ConfigEntry, device: DeviceEntry | None = None
+    hass: HomeAssistant, entry: AjaxConfigEntry, device: DeviceEntry | None = None
 ) -> dict[str, Any]:
     """Get fresh raw data from all devices."""
 
@@ -32,12 +35,14 @@ async def get_ajax_raw_data(
     all_cameras = []
     all_video_edges = []
     hub_count = 0
+    target_device_id: str | None = None
 
-    target_device_id = (
-        next(str(value) for domain, value in device.identifiers if domain == DOMAIN)
-        if device is not None
-        else None
-    )
+    with contextlib.suppress(StopIteration):
+        target_device_id = (
+            next(str(value) for domain, value in device.identifiers if domain == DOMAIN)
+            if device is not None
+            else None
+        )
 
     if coordinator.account:
         for _space_id, space in coordinator.account.spaces.items():
@@ -147,20 +152,20 @@ async def get_ajax_raw_data(
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: AjaxConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a config entry."""
 
     ajax_data = await get_ajax_raw_data(hass, entry)
 
     return {
-        "config_entry_data": async_redact_data(dict(entry.data), TO_REDACT),
+        "config_entry_data": async_redact_data(entry.data, TO_REDACT),
         "ajax_data": async_redact_data(ajax_data, TO_REDACT),
     }
 
 
 async def async_get_device_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry, device: DeviceEntry
+    hass: HomeAssistant, entry: AjaxConfigEntry, device: DeviceEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a specific device."""
 
