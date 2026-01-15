@@ -101,7 +101,7 @@ async def get_ajax_raw_data(hass: HomeAssistant, entry: ConfigEntry) -> dict[str
         for device in all_devices:
             dtype = device.get("deviceType", "unknown")
             type_counts[dtype] = type_counts.get(dtype, 0) + 1
-            type_list = {dtype: count for dtype, count in sorted(type_counts.items())}
+        type_list = {dtype: count for dtype, count in sorted(type_counts.items())}
 
         summary = {
             "hubs": hub_count,
@@ -110,6 +110,15 @@ async def get_ajax_raw_data(hass: HomeAssistant, entry: ConfigEntry) -> dict[str
             "video_edges": len(all_video_edges),
             "device_types": type_list,
         }
+    else:
+        summary = {
+            "hubs": 0,
+            "devices": 0,
+            "cameras": 0,
+            "video_edges": 0,
+            "device_types": {},
+        }
+
     return {
         "devices": all_devices,
         "cameras": all_cameras,
