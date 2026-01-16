@@ -226,7 +226,7 @@
       "socket": {
         "default": "mdi:power-socket-eu"
       },
-      "tilt-sensor": {
+      "tilt_sensor": {
         "default": "mdi:angle-acute"
       }
     }
