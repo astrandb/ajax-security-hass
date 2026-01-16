@@ -177,20 +177,6 @@
         "default": "mdi:bell-badge"
       }
     },
-    "services": {
-      "force_arm": {
-        "service": "mdi:shield-lock"
-      },
-      "force_arm_night": {
-        "service": "mdi:shield-moon"
-      },
-      "get_raw_devices": {
-        "service": "mdi:tray-arrow-down"
-      },
-      "refresh_metadata": {
-        "service": "mdi:refresh"
-      }
-    },
     "switch": {
       "always_active": {
         "default": "mdi:shield-alert"
@@ -243,6 +229,20 @@
       "tilt-sensor": {
         "default": "mdi:angle-acute"
       }
+    }
+  },
+  "services": {
+    "force_arm": {
+      "service": "mdi:shield-lock"
+    },
+    "force_arm_night": {
+      "service": "mdi:shield-moon"
+    },
+    "get_raw_devices": {
+      "service": "mdi:tray-arrow-down"
+    },
+    "refresh_metadata": {
+      "service": "mdi:refresh"
     }
   }
 }
